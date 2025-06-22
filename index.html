@@ -320,7 +320,7 @@
       ) {
         if(soundOn) {
           hitSound.currentTime = 0;
-          hitSound.play();
+          hitSound.play().catch(() => {}); // ignore play errors
         }
         gameActive = false;
         continueAvailable = true;
@@ -410,7 +410,7 @@
   soundToggle.onclick = () => {
     soundOn = !soundOn;
     soundToggle.textContent = soundOn ? '🔊' : '🔇';
-    if(soundOn && gameActive && !paused) bgMusic.play();
+    if(soundOn && gameActive && !paused) bgMusic.play().catch(() => {});
     else bgMusic.pause();
   };
 
@@ -421,7 +421,7 @@
     pauseToggle.textContent = paused ? '▶️' : '⏸️';
     if(paused) bgMusic.pause();
     else {
-      if(soundOn) bgMusic.play();
+      if(soundOn) bgMusic.play().catch(() => {});
       requestAnimationFrame(update);
     }
   };
@@ -433,7 +433,7 @@
       createPlayer();
       gameActive = true;
       paused = false;
-      if(soundOn) bgMusic.play();
+      if(soundOn) bgMusic.play().catch(() => {});
       requestAnimationFrame(update);
     }, 1500);
   };
@@ -443,9 +443,29 @@
     endGame();
   };
 
+  // Audio unlock on first user interaction (needed for mobile & WebView)
+  let audioUnlocked = false;
+  function unlockAudio() {
+    if(audioUnlocked) return;
+    bgMusic.play().then(() => {
+      bgMusic.pause();
+      bgMusic.currentTime = 0;
+      audioUnlocked = true;
+    }).catch(() => {
+      // autoplay blocked, will retry on next user interaction
+    });
+  }
+
   // Start / Retry buttons
-  document.getElementById('play-btn').onclick = startGame;
-  document.getElementById('retry-btn').onclick = startGame;
+  document.getElementById('play-btn').addEventListener('click', () => {
+    unlockAudio();
+    startGame();
+  });
+
+  document.getElementById('retry-btn').addEventListener('click', () => {
+    unlockAudio();
+    startGame();
+  });
 
   // Skins store rendering
   function renderSkins() {
