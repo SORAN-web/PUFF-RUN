@@ -83,6 +83,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    white-space: pre-line;
   }
   button {
     padding: 12px 24px;
@@ -130,11 +131,14 @@
   <button id="close-skin-store-btn">Close</button>
 </div>
 
-<audio id="bg-music" loop preload="auto">
-  <source src="https://cdn.pixabay.com/download/audio/2023/03/22/audio_b4bb0fadb8.mp3?filename=techno-race-145141.mp3" type="audio/mpeg" />
+<!-- Real background music -->
+<audio id="bg-music" loop preload="auto" volume="0.2">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/01/audio_32e5c9c4f5.mp3?filename=upbeat-electronic-music-loop-22042.mp3" type="audio/mpeg" />
 </audio>
-<audio id="hit-sound" preload="auto">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_792ba4168e.mp3?filename=retro-game-over-21391.mp3" type="audio/mpeg" />
+
+<!-- Real hit sound -->
+<audio id="hit-sound" preload="auto" volume="1">
+  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_74a772e8ee.mp3?filename=hit-2-43699.mp3" type="audio/mpeg" />
 </audio>
 
 <script>
@@ -260,28 +264,14 @@
   function drawObstacles() {
     obstacles.forEach(ob => {
       const gradient = ctx.createLinearGradient(ob.x, ob.y, ob.x+ob.width, ob.y+ob.height);
-      gradient.addColorStop(0, '#4b0082');     // dark purple
-      gradient.addColorStop(0.5, '#6a0dad');   // purple
-      gradient.addColorStop(1, '#33004d');     // darker purple
+      gradient.addColorStop(0, '#4b0082');
+      gradient.addColorStop(0.5, '#6a0dad');
+      gradient.addColorStop(1, '#33004d');
       ctx.fillStyle = gradient;
       ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
     });
   }
 
-  function spawnObstacle() {
-    const width = 40 + Math.random()*30;
-    const x = Math.random()*(width < (width - width) ? 0 : (width ? (width - width) : 0)); // Corrected below
-    // fix x to spawn anywhere in canvas width minus obstacle width
-    const xPos = Math.random()*(width - width);
-    // The above is incorrect, fix:
-
-    const obsWidth = 40 + Math.random()*30;
-    const xPosCorrect = Math.random() * (width - obsWidth);
-
-    obstacles.push({x: xPosCorrect, y: -60, width: obsWidth, height: 20, speed: getSpeedForLevel()});
-  }
-
-  // Fix spawnObstacle to proper version:
   function spawnObstacle() {
     const obsWidth = 40 + Math.random()*30;
     const xPos = Math.random() * (width - obsWidth);
@@ -289,7 +279,6 @@
   }
 
   function getSpeedForLevel() {
-    // Increase speed by 1 per level
     return 6 + currentLevel;
   }
 
@@ -301,12 +290,10 @@
 
   function updateScoreAndLevel() {
     scoreDisplay.textContent = `Score: ${score}`;
-
-    // Levels at exact scores 1000, 2000, 3000, ...
     const newLevel = Math.floor(score / 1000);
     if(newLevel > currentLevel) {
       currentLevel = newLevel;
-      player.speed += 1; // speed increase each level
+      player.speed += 1;
       showLevelUp(currentLevel);
     }
   }
@@ -316,17 +303,14 @@
 
     drawBackground();
 
-    // Spawn obstacles randomly with some chance
     if(Math.random() < 0.02) spawnObstacle();
 
     obstacles.forEach(ob => {
       ob.y += ob.speed;
     });
 
-    // Remove obstacles that went off screen
     obstacles = obstacles.filter(ob => ob.y < height);
 
-    // Check collision player vs obstacles
     for(const ob of obstacles) {
       if(
         ob.x < player.x + player.radius*2 &&
@@ -334,20 +318,19 @@
         ob.y < player.y + player.radius*2 &&
         ob.y + ob.height > player.y
       ) {
-        if(soundOn) hitSound.play();
+        if(soundOn) {
+          hitSound.currentTime = 0;
+          hitSound.play();
+        }
         gameActive = false;
-        // Show continue screen
         continueAvailable = true;
         continueScreen.style.display = 'flex';
         return;
       }
     }
 
-    // Move player
     if(player.movingLeft) player.x -= player.speed;
     if(player.movingRight) player.x += player.speed;
-
-    // Clamp player position inside canvas
     player.x = Math.max(0, Math.min(width - player.radius*2, player.x));
 
     drawPlayer();
@@ -372,7 +355,12 @@
     startScreen.style.display = 'none';
     gameOverScreen.style.display = 'none';
     continueScreen.style.display = 'none';
-    if(soundOn) bgMusic.play();
+    if(soundOn) {
+      bgMusic.volume = 0.2;
+      bgMusic.play().catch(() => {
+        // autoplay blocked, do nothing
+      });
+    }
 
     requestAnimationFrame(update);
   }
@@ -384,9 +372,7 @@
     bgMusic.pause();
   }
 
-  // Input Handling
-
-  // Keyboard
+  // Keyboard input
   window.addEventListener('keydown', e => {
     if(!gameActive) return;
     if(e.key === 'ArrowLeft' || e.key === 'a') player.movingLeft = true;
@@ -399,7 +385,7 @@
     if(e.key === 'ArrowRight' || e.key === 'd') player.movingRight = false;
   });
 
-  // Touch for mobile: drag left-right on bottom half
+  // Touch controls
   let touchX = null;
   canvas.addEventListener('touchstart', e => {
     if(!gameActive) return;
@@ -420,7 +406,7 @@
     touchX = null;
   });
 
-  // Sound toggle
+  // Sound toggle button
   soundToggle.onclick = () => {
     soundOn = !soundOn;
     soundToggle.textContent = soundOn ? '🔊' : '🔇';
@@ -428,7 +414,7 @@
     else bgMusic.pause();
   };
 
-  // Pause toggle
+  // Pause toggle button
   pauseToggle.onclick = () => {
     if(!gameActive) return;
     paused = !paused;
@@ -442,10 +428,8 @@
 
   // Continue screen buttons
   watchAdBtn.onclick = () => {
-    // Simulate watching ad with timeout
     continueScreen.style.display = 'none';
     setTimeout(() => {
-      // Continue game
       createPlayer();
       gameActive = true;
       paused = false;
@@ -463,28 +447,31 @@
   document.getElementById('play-btn').onclick = startGame;
   document.getElementById('retry-btn').onclick = startGame;
 
-  // Skins store
+  // Skins store rendering
   function renderSkins() {
     skinList.innerHTML = '';
     skins.forEach(skin => {
       const btn = document.createElement('button');
       btn.innerText = `${skin.name}\n$${skin.price}`;
-      btn.style.background = `linear-gradient(45deg, ${skin.colors[0]}, ${skin.colors[1]})`;
+      btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
       btn.onclick = () => {
         selectedSkin = skin;
-        alert(`Selected skin: ${skin.name}\n(In real app: Purchase flow here)`);
-        createPlayer();
         skinStore.style.display = 'none';
+        startScreen.style.display = 'flex';
       };
       skinList.appendChild(btn);
     });
   }
+
   storeBtn.onclick = () => {
-    skinStore.style.display = 'flex';
     renderSkins();
+    skinStore.style.display = 'flex';
+    startScreen.style.display = 'none';
   };
+
   closeSkinStoreBtn.onclick = () => {
     skinStore.style.display = 'none';
+    startScreen.style.display = 'flex';
   };
 
   window.addEventListener('resize', resize);
