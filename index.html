@@ -1,504 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Puff Run - Fixed Full Version</title>
-<style>
-  * {
-    margin: 0; padding: 0; box-sizing: border-box;
-  }
-  html, body {
-    width: 100%; height: 100%;
-    overflow: hidden;
-    background: radial-gradient(circle at center, #000, #111);
-    font-family: 'Rubik', sans-serif;
-    color: white;
-  }
-  canvas {
-    display: block;
-    background: radial-gradient(circle at center, #222, #000);
-    width: 100vw;
-    height: 100vh;
-    touch-action: none;
-  }
-  #score-display, #level-message, #start-screen, #game-over-screen, #continue-screen, #skin-store {
-    position: absolute; z-index: 10; text-align: center; width: 100%; font-weight: 700;
-  }
-  #score-display {
-    top: 10px; left: 20px;
-    font-size: 1.5rem;
-    width: auto;
-    text-align: left;
-  }
-  #level-message {
-    top: 50px;
-    font-size: 2rem;
-    pointer-events: none;
-  }
-  #toggle-sound, #toggle-pause {
-    position: absolute; top: 10px; z-index: 10;
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    user-select: none;
-  }
-  #toggle-sound {
-    right: 60px;
-  }
-  #toggle-pause {
-    right: 20px;
-  }
-  #start-screen, #game-over-screen, #continue-screen, #skin-store {
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    font-size: 2rem;
-    z-index: 20;
-  }
-  #continue-screen div {
-    margin-bottom: 20px;
-    font-size: 1.7rem;
-  }
-  #skin-list {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    max-width: 90vw;
-    margin-bottom: 20px;
-  }
-  #skin-list button {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-    font-size: 0.8rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    white-space: pre-line;
-  }
-  button {
-    padding: 12px 24px;
-    font-size: 1.25rem;
-    border: none;
-    border-radius: 8px;
-    background: #6a0dad;
-    color: white;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: background 0.3s;
-  }
-  button:hover {
-    background: #7d3cff;
-  }
-</style>
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <title>Mini Cricket Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f7f7f7;
+        }
+        #game-area {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff;
+            display: inline-block;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px #999;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        button:active {
+            box-shadow: 0 2px #666;
+            transform: translateY(4px);
+        }
+    </style>
 </head>
 <body>
-<canvas id="game-canvas"></canvas>
-<div id="score-display">Score: 0</div>
-<div id="level-message"></div>
-<button id="toggle-sound" title="Toggle Sound">🔊</button>
-<button id="toggle-pause" title="Pause/Resume">⏸️</button>
 
-<div id="start-screen">
-  <button id="play-btn">Start Game</button>
-  <button id="store-btn">🎨 Skins</button>
-</div>
+    <h1>Mini Cricket Game</h1>
+    <button onclick="startGame()">Start Game</button>
 
-<div id="game-over-screen" style="display:none;">
-  <div id="score-display-final"></div>
-  <button id="retry-btn">Play Again</button>
-</div>
+    <div id="game-area" style="display:none;">
+        <h2>Score: <span id="score">0</span></h2>
+        <h3>Balls Left: <span id="balls">6</span></h3>
+        <button onclick="playBall()">Hit Ball</button>
+        <p id="message"></p>
+    </div>
 
-<div id="continue-screen" style="display:none;">
-  <div>You hit an obstacle! Watch an ad to continue?</div>
-  <button id="watch-ad-btn">Watch Ad</button>
-  <button id="no-thanks-btn">No Thanks</button>
-</div>
+    <!-- Background music -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="game-music-player-console-8bit-background-intro-theme-297305.mp3" type="audio/mpeg">
+    </audio>
 
-<div id="skin-store" style="display:none;">
-  <h2>Select Your Dreamy Skin</h2>
-  <div id="skin-list"></div>
-  <button id="close-skin-store-btn">Close</button>
-</div>
+    <!-- Hit sound effect -->
+    <audio id="hit-sound" preload="auto">
+        <source src="plastic-bat-hits-ball-kids-playing-cricket-sound-effect-359990.mp3" type="audio/mpeg">
+    </audio>
 
-<!-- Real background music -->
-<audio id="bg-music" loop preload="auto" volume="0.2">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/01/audio_32e5c9c4f5.mp3?filename=upbeat-electronic-music-loop-22042.mp3" type="audio/mpeg" />
-</audio>
+    <script>
+        let score = 0;
+        let ballsLeft = 6;
 
-<!-- Real hit sound -->
-<audio id="hit-sound" preload="auto" volume="1">
-  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_74a772e8ee.mp3?filename=hit-2-43699.mp3" type="audio/mpeg" />
-</audio>
-
-<script>
-(() => {
-  const canvas = document.getElementById('game-canvas');
-  const ctx = canvas.getContext('2d');
-  const bgMusic = document.getElementById('bg-music');
-  const hitSound = document.getElementById('hit-sound');
-  const soundToggle = document.getElementById('toggle-sound');
-  const pauseToggle = document.getElementById('toggle-pause');
-  const levelMessage = document.getElementById('level-message');
-  const startScreen = document.getElementById('start-screen');
-  const gameOverScreen = document.getElementById('game-over-screen');
-  const scoreDisplay = document.getElementById('score-display');
-  const finalScoreDisplay = document.getElementById('score-display-final');
-  const continueScreen = document.getElementById('continue-screen');
-  const watchAdBtn = document.getElementById('watch-ad-btn');
-  const noThanksBtn = document.getElementById('no-thanks-btn');
-  const skinStore = document.getElementById('skin-store');
-  const skinList = document.getElementById('skin-list');
-  const storeBtn = document.getElementById('store-btn');
-  const closeSkinStoreBtn = document.getElementById('close-skin-store-btn');
-
-  let width, height;
-  let soundOn = true;
-  let paused = false;
-  let gameActive = false;
-  let score = 0;
-  let currentLevel = 0;
-  let obstacles = [];
-  let stars = [];
-  let player;
-  let continueAvailable = false; // track if player can continue after ad
-
-  const skins = [
-    { id: 'default', name: 'Default', colors: ['#0af', '#005'], price: 0 },
-    { id: 'dream1', name: 'Aurora Glow', colors: ['#ff5f6d', '#ffc371'], price: 0.9 },
-    { id: 'dream2', name: 'Neon Pulse', colors: ['#0ff', '#0a0'], price: 1.9 },
-    { id: 'dream3', name: 'Star Glimmer', colors: ['#ffcc00', '#ff00cc'], price: 2.9 },
-    { id: 'dream4', name: 'Ocean Pearl', colors: ['#0ff', '#004'], price: 3.4 },
-    { id: 'dream5', name: 'Lunar Shine', colors: ['#999', '#fff'], price: 4.9 },
-    { id: 'dream6', name: 'Mystic Sky', colors: ['#4facfe', '#00f2fe'], price: 5.4 },
-    { id: 'dream7', name: 'Blazing Nova', colors: ['#ff6a00', '#ee0979'], price: 6.9 },
-    { id: 'dream8', name: 'Candy Pop', colors: ['#fcb045', '#fd1d1d'], price: 7.9 },
-    { id: 'dream9', name: 'Frozen Dream', colors: ['#83a4d4', '#b6fbff'], price: 8.9 },
-    { id: 'dream10', name: 'Golden Eye', colors: ['#FFD700', '#FFA500'], price: 9.9 },
-    { id: 'dream11', name: 'Fire Orb', colors: ['#FF512F', '#DD2476'], price: 11.9 },
-    { id: 'dream12', name: 'Galaxy Core', colors: ['#2b5876', '#4e4376'], price: 13.9 },
-    { id: 'dream13', name: 'Emerald Bloom', colors: ['#56ab2f', '#a8e063'], price: 15.4 },
-    { id: 'dream14', name: 'Pink Diamond', colors: ['#ff6a88', '#ff99ac'], price: 18.0 },
-    { id: 'dream15', name: 'Ethereal Flame', colors: ['#ff9966', '#ff5e62'], price: 20.0 },
-  ];
-
-  let selectedSkin = skins[0];
-
-  function resize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    if(player) {
-      player.y = height - 100;
-      player.x = Math.min(player.x, width - player.radius * 2);
-    }
-
-    stars = [];
-    for(let i=0; i<150; i++) {
-      stars.push({
-        x: Math.random()*width,
-        y: Math.random()*height,
-        radius: Math.random()*1.5,
-        speed: 0.2 + Math.random()*1.5
-      });
-    }
-  }
-
-  function createPlayer() {
-    player = {
-      x: width/2 - 25,
-      y: height - 100,
-      radius: 25,
-      speed: 8,
-      movingLeft: false,
-      movingRight: false,
-      colors: selectedSkin.colors
-    };
-  }
-
-  function drawBackground() {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0,0,width,height);
-    ctx.fillStyle = '#fff';
-    stars.forEach(star => {
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, star.radius, 0, Math.PI*2);
-      ctx.fill();
-      star.y += star.speed;
-      if(star.y > height) {
-        star.y = 0;
-        star.x = Math.random()*width;
-      }
-    });
-  }
-
-  function drawPlayer() {
-    const grd = ctx.createRadialGradient(
-      player.x + player.radius,
-      player.y + player.radius,
-      player.radius/2,
-      player.x + player.radius,
-      player.y + player.radius,
-      player.radius
-    );
-    grd.addColorStop(0, player.colors[0]);
-    grd.addColorStop(1, player.colors[1]);
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(player.x + player.radius, player.y + player.radius, player.radius, 0, Math.PI*2);
-    ctx.fill();
-  }
-
-  function drawObstacles() {
-    obstacles.forEach(ob => {
-      const gradient = ctx.createLinearGradient(ob.x, ob.y, ob.x+ob.width, ob.y+ob.height);
-      gradient.addColorStop(0, '#4b0082');
-      gradient.addColorStop(0.5, '#6a0dad');
-      gradient.addColorStop(1, '#33004d');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
-    });
-  }
-
-  function spawnObstacle() {
-    const obsWidth = 40 + Math.random()*30;
-    const xPos = Math.random() * (width - obsWidth);
-    obstacles.push({ x: xPos, y: -60, width: obsWidth, height: 20, speed: getSpeedForLevel() });
-  }
-
-  function getSpeedForLevel() {
-    return 6 + currentLevel;
-  }
-
-  function showLevelUp(level) {
-    levelMessage.textContent = `LEVEL ${level}!`;
-    levelMessage.style.display = 'block';
-    setTimeout(() => { levelMessage.style.display = 'none'; }, 2000);
-  }
-
-  function updateScoreAndLevel() {
-    scoreDisplay.textContent = `Score: ${score}`;
-    const newLevel = Math.floor(score / 1000);
-    if(newLevel > currentLevel) {
-      currentLevel = newLevel;
-      player.speed += 1;
-      showLevelUp(currentLevel);
-    }
-  }
-
-  function update() {
-    if(!gameActive || paused) return;
-
-    drawBackground();
-
-    if(Math.random() < 0.02) spawnObstacle();
-
-    obstacles.forEach(ob => {
-      ob.y += ob.speed;
-    });
-
-    obstacles = obstacles.filter(ob => ob.y < height);
-
-    for(const ob of obstacles) {
-      if(
-        ob.x < player.x + player.radius*2 &&
-        ob.x + ob.width > player.x &&
-        ob.y < player.y + player.radius*2 &&
-        ob.y + ob.height > player.y
-      ) {
-        if(soundOn) {
-          hitSound.currentTime = 0;
-          hitSound.play().catch(() => {}); // ignore play errors
+        function startGame() {
+            score = 0;
+            ballsLeft = 6;
+            document.getElementById("score").textContent = score;
+            document.getElementById("balls").textContent = ballsLeft;
+            document.getElementById("message").textContent = '';
+            document.getElementById("game-area").style.display = "block";
+            document.getElementById("bg-music").volume = 0.2;
+            document.getElementById("bg-music").play();
         }
-        gameActive = false;
-        continueAvailable = true;
-        continueScreen.style.display = 'flex';
-        return;
-      }
-    }
 
-    if(player.movingLeft) player.x -= player.speed;
-    if(player.movingRight) player.x += player.speed;
-    player.x = Math.max(0, Math.min(width - player.radius*2, player.x));
+        function playBall() {
+            if (ballsLeft <= 0) return;
 
-    drawPlayer();
-    drawObstacles();
+            const outcome = Math.random();
+            const hitSound = document.getElementById("hit-sound");
+            hitSound.currentTime = 0;
+            hitSound.play();
 
-    score++;
-    updateScoreAndLevel();
+            if (outcome < 0.1) {
+                document.getElementById("message").textContent = "Oh no! You're OUT!";
+                ballsLeft = 0;
+            } else {
+                const runs = Math.floor(Math.random() * 7); // 0 to 6 runs
+                score += runs;
+                document.getElementById("message").textContent = `You scored ${runs} run(s)!`;
+                ballsLeft--;
+            }
 
-    requestAnimationFrame(update);
-  }
+            document.getElementById("score").textContent = score;
+            document.getElementById("balls").textContent = ballsLeft;
 
-  function startGame() {
-    score = 0;
-    currentLevel = 0;
-    obstacles = [];
-    createPlayer();
-    gameActive = true;
-    paused = false;
-    continueAvailable = false;
+            if (ballsLeft === 0) {
+                setTimeout(() => {
+                    alert("Game Over! Your final score is: " + score);
+                    document.getElementById("bg-music").pause();
+                }, 500);
+            }
+        }
+    </script>
 
-    pauseToggle.textContent = '⏸️';
-    startScreen.style.display = 'none';
-    gameOverScreen.style.display = 'none';
-    continueScreen.style.display = 'none';
-    if(soundOn) {
-      bgMusic.volume = 0.2;
-      bgMusic.play().catch(() => {
-        // autoplay blocked, do nothing
-      });
-    }
-
-    requestAnimationFrame(update);
-  }
-
-  function endGame() {
-    gameActive = false;
-    finalScoreDisplay.textContent = `Score: ${score}`;
-    gameOverScreen.style.display = 'flex';
-    bgMusic.pause();
-  }
-
-  // Keyboard input
-  window.addEventListener('keydown', e => {
-    if(!gameActive) return;
-    if(e.key === 'ArrowLeft' || e.key === 'a') player.movingLeft = true;
-    if(e.key === 'ArrowRight' || e.key === 'd') player.movingRight = true;
-  });
-
-  window.addEventListener('keyup', e => {
-    if(!gameActive) return;
-    if(e.key === 'ArrowLeft' || e.key === 'a') player.movingLeft = false;
-    if(e.key === 'ArrowRight' || e.key === 'd') player.movingRight = false;
-  });
-
-  // Touch controls
-  let touchX = null;
-  canvas.addEventListener('touchstart', e => {
-    if(!gameActive) return;
-    const t = e.touches[0];
-    if(t.clientY > height / 2) {
-      touchX = t.clientX;
-    }
-  });
-  canvas.addEventListener('touchmove', e => {
-    if(!gameActive || touchX === null) return;
-    const t = e.touches[0];
-    const dx = t.clientX - touchX;
-    player.x += dx;
-    player.x = Math.max(0, Math.min(width - player.radius*2, player.x));
-    touchX = t.clientX;
-  });
-  canvas.addEventListener('touchend', e => {
-    touchX = null;
-  });
-
-  // Sound toggle button
-  soundToggle.onclick = () => {
-    soundOn = !soundOn;
-    soundToggle.textContent = soundOn ? '🔊' : '🔇';
-    if(soundOn && gameActive && !paused) bgMusic.play().catch(() => {});
-    else bgMusic.pause();
-  };
-
-  // Pause toggle button
-  pauseToggle.onclick = () => {
-    if(!gameActive) return;
-    paused = !paused;
-    pauseToggle.textContent = paused ? '▶️' : '⏸️';
-    if(paused) bgMusic.pause();
-    else {
-      if(soundOn) bgMusic.play().catch(() => {});
-      requestAnimationFrame(update);
-    }
-  };
-
-  // Continue screen buttons
-  watchAdBtn.onclick = () => {
-    continueScreen.style.display = 'none';
-    setTimeout(() => {
-      createPlayer();
-      gameActive = true;
-      paused = false;
-      if(soundOn) bgMusic.play().catch(() => {});
-      requestAnimationFrame(update);
-    }, 1500);
-  };
-
-  noThanksBtn.onclick = () => {
-    continueScreen.style.display = 'none';
-    endGame();
-  };
-
-  // Audio unlock on first user interaction (needed for mobile & WebView)
-  let audioUnlocked = false;
-  function unlockAudio() {
-    if(audioUnlocked) return;
-    bgMusic.play().then(() => {
-      bgMusic.pause();
-      bgMusic.currentTime = 0;
-      audioUnlocked = true;
-    }).catch(() => {
-      // autoplay blocked, will retry on next user interaction
-    });
-  }
-
-  // Start / Retry buttons
-  document.getElementById('play-btn').addEventListener('click', () => {
-    unlockAudio();
-    startGame();
-  });
-
-  document.getElementById('retry-btn').addEventListener('click', () => {
-    unlockAudio();
-    startGame();
-  });
-
-  // Skins store rendering
-  function renderSkins() {
-    skinList.innerHTML = '';
-    skins.forEach(skin => {
-      const btn = document.createElement('button');
-      btn.innerText = `${skin.name}\n$${skin.price}`;
-      btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
-      btn.onclick = () => {
-        selectedSkin = skin;
-        skinStore.style.display = 'none';
-        startScreen.style.display = 'flex';
-      };
-      skinList.appendChild(btn);
-    });
-  }
-
-  storeBtn.onclick = () => {
-    renderSkins();
-    skinStore.style.display = 'flex';
-    startScreen.style.display = 'none';
-  };
-
-  closeSkinStoreBtn.onclick = () => {
-    skinStore.style.display = 'none';
-    startScreen.style.display = 'flex';
-  };
-
-  window.addEventListener('resize', resize);
-  resize();
-  createPlayer();
-
-})();
-</script>
 </body>
 </html>
