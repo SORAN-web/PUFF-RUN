@@ -5,7 +5,105 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Puff Run - Dream Edition Super Advanced</title>
 <style>
-  /* ... your existing CSS ... (unchanged for brevity) ... */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: radial-gradient(circle at center, #000, #111);
+    font-family: 'Rubik', sans-serif;
+    color: white;
+  }
+  canvas {
+    display: block;
+    background: radial-gradient(circle at center, #111, #000);
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+  }
+  #score-display, #level-message, #high-score-display, #message-box {
+    position: absolute;
+    z-index: 11;
+    font-weight: 700;
+    user-select: none;
+    pointer-events: none;
+  }
+  #score-display {
+    top: 10px; left: 20px; font-size: 1.6rem; text-align: left;
+  }
+  #high-score-display {
+    top: 40px; left: 20px; font-size: 1rem; opacity: 0.7;
+  }
+  #level-message {
+    top: 80px; width: 100%; font-size: 2rem; text-align: center; opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+  #message-box {
+    top: 110px; width: 100%; font-size: 1.4rem; text-align: center; opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  #toggle-sound, #toggle-pause {
+    position: absolute; top: 10px; z-index: 11;
+    font-size: 1.7rem;
+    background: none; border: none; color: white; cursor: pointer; user-select: none;
+    transition: transform 0.2s ease;
+  }
+  #toggle-sound:hover, #toggle-pause:hover {
+    transform: scale(1.2);
+  }
+  #toggle-sound { right: 60px; }
+  #toggle-pause { right: 20px; }
+  #start-screen, #game-over-screen, #continue-screen, #skin-store {
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    font-size: 2.3rem; z-index: 20;
+    user-select: none;
+  }
+  #continue-screen div, #game-over-screen div, #start-screen div {
+    margin-bottom: 25px;
+  }
+  #skin-list {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    max-width: 90vw; margin-bottom: 20px;
+  }
+  #skin-list button {
+    width: 90px; height: 90px; border-radius: 50%; border: none;
+    font-weight: 700; cursor: pointer; color: white; font-size: 0.9rem;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    white-space: pre-line;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+  #skin-list button:hover:not([disabled]) {
+    transform: scale(1.15);
+    box-shadow: 0 0 15px 3px rgba(125, 60, 255, 0.7);
+    z-index: 1;
+  }
+  #skin-list button[disabled] {
+    filter: grayscale(1) brightness(0.6);
+    cursor: default;
+  }
+  #skin-list button .price-tag {
+    position: absolute;
+    bottom: 6px;
+    background: rgba(0,0,0,0.6);
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+  }
+  button {
+    padding: 14px 28px; font-size: 1.3rem; border: none; border-radius: 10px;
+    background: #6a0dad; color: white; cursor: pointer; margin-top: 15px;
+    transition: background 0.3s;
+  }
+  button:hover:not([disabled]) {
+    background: #7d3cff;
+  }
+  button[disabled] {
+    background: #444 !important;
+    cursor: default;
+  }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700&display=swap" rel="stylesheet" />
 </head>
@@ -50,6 +148,7 @@
 
 <script>
 (() => {
+  // Grab DOM elements
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -88,14 +187,14 @@
   let obstacles = [];
   let stars = [];
   let particles = [];
-  let player = null; // Declare here for scope
+  let player = null; // Declare here
   let continueAvailable = false;
   let adPlaying = false;
   let powerups = [];
   let powerupActive = null;
   let powerupTimer = 0;
 
-  // Skins with unlock status & price
+  // Skins data
   const skins = [
     { id: 'default', name: 'Default', colors: ['#0af', '#005'], price: 0, unlocked: true },
     { id: 'dream1', name: 'Aurora Glow', colors: ['#ff5f6d', '#ffc371'], price: 1, unlocked: false },
@@ -107,7 +206,7 @@
     { id: 'dream7', name: 'Celestial Nova', colors: ['#3a1c71', '#d76d77', '#ffaf7b'], price: 20, unlocked: false },
   ];
 
-  let selectedSkin = skins[0]; // default
+  let selectedSkin = skins[0]; // default skin
 
   // Load saved data
   function loadGameData() {
@@ -140,7 +239,7 @@
     } catch(e) {}
   }
 
-  // Resize canvas & initialize stars
+  // Resize canvas & create stars
   function resize() {
     width = window.innerWidth;
     height = window.innerHeight;
@@ -155,16 +254,16 @@
     stars = [];
     for(let i=0; i<180; i++) {
       stars.push({
-        x: Math.random()*width,
-        y: Math.random()*height,
-        radius: Math.random()*1.5,
-        speed: 0.2 + Math.random()*1.5
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5,
+        speed: 0.2 + Math.random() * 1.5
       });
     }
   }
 
+  // Create player object
   function createPlayer() {
-    // Initialize player with current skin
     player = {
       x: width/2,
       y: height - 75,
@@ -181,6 +280,7 @@
     };
   }
 
+  // Particles on collision
   function createParticles(x, y, color) {
     for(let i=0; i<25; i++) {
       particles.push({
@@ -194,6 +294,7 @@
     }
   }
 
+  // Draw player
   function drawPlayer() {
     const gradient = ctx.createRadialGradient(
       player.x,
@@ -249,12 +350,13 @@
     });
   }
 
+  // draw obstacles
   function drawObstacles() {
     obstacles.forEach(ob => {
       ctx.fillStyle = ob.color;
       ctx.beginPath();
       if(ob.shape === 'circle') {
-        ctx.arc(ob.x + ob.radius, ob.y + ob.radius, ob.radius, 0, Math.PI * 2);
+        ctx.arc(ob.x + ob.radius, ob.y + ob.radius, ob.radius, 0, Math.PI*2);
         ctx.fill();
       } else if(ob.shape === 'triangle') {
         ctx.moveTo(ob.x + ob.width/2, ob.y);
@@ -262,25 +364,26 @@
         ctx.lineTo(ob.x + ob.width, ob.y + ob.height);
         ctx.closePath();
         ctx.fill();
-      } else { // rect
+      } else { // rectangle
         ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
       }
     });
   }
 
+  // spawn obstacles
   function spawnObstacle() {
     const shapes = ['rect', 'circle', 'triangle'];
-    const shape = shapes[Math.floor(Math.random()*shapes.length)];
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
     let ob;
     if(shape === 'circle') {
-      const radius = 20 + Math.random()*15;
+      const radius = 20 + Math.random() * 15;
       ob = {
         shape: 'circle',
-        x: Math.random()*(width - radius*2),
+        x: Math.random() * (width - radius*2),
         y: -radius*2 - 10,
-        radius,
+        radius: radius,
         speed: getSpeedForLevel(),
-        color: `hsl(${Math.random()*360}, 70%, 60%)`,
+        color: `hsl(${Math.random()*360}, 70%, 60%)`
       };
     } else if(shape === 'triangle') {
       const widthOb = 40 + Math.random()*20;
@@ -292,7 +395,7 @@
         width: widthOb,
         height: heightOb,
         speed: getSpeedForLevel(),
-        color: `hsl(${Math.random()*360}, 80%, 50%)`,
+        color: `hsl(${Math.random()*360}, 80%, 50%)`
       };
     } else {
       const widthOb = 40 + Math.random()*40;
@@ -304,12 +407,13 @@
         width: widthOb,
         height: heightOb,
         speed: getSpeedForLevel(),
-        color: `hsl(${Math.random()*360}, 90%, 40%)`,
+        color: `hsl(${Math.random()*360}, 90%, 40%)`
       };
     }
     obstacles.push(ob);
   }
 
+  // spawn powerups
   function spawnPowerup() {
     const types = ['shield', 'slow'];
     const type = types[Math.floor(Math.random() * types.length)];
@@ -319,7 +423,7 @@
       y: -40,
       radius: 20,
       speed: 3 + currentLevel * 0.4,
-      color: type === 'shield' ? '#87ceeb' : '#ffcc00',
+      color: type === 'shield' ? '#87ceeb' : '#ffcc00'
     });
   }
 
@@ -366,78 +470,69 @@
     return 6 + currentLevel * 0.9;
   }
 
-  // Collision helpers
+  // collision helpers
   function circleRectCollision(cx, cy, radius, rx, ry, rw, rh) {
     const closestX = Math.max(rx, Math.min(cx, rx + rw));
     const closestY = Math.max(ry, Math.min(cy, ry + rh));
     const dx = cx - closestX;
     const dy = cy - closestY;
-    return (dx * dx + dy * dy) < (radius * radius);
+    return (dx*dx + dy*dy) < (radius*radius);
   }
 
   function circleCircleCollision(x1, y1, r1, x2, y2, r2) {
     const dx = x1 - x2;
     const dy = y1 - y2;
-    const dist = dx*dx + dy*dy;
-    const rSum = r1 + r2;
-    return dist <= rSum*rSum;
+    return (dx*dx + dy*dy) <= (r1 + r2)*(r1 + r2);
   }
 
   function circleTriangleCollision(cx, cy, r, tx, ty, tw, th) {
-    // Approximate collision: use bounding box and distance
+    // Approximate collision: bounding box check
     if(cx + r < tx || cx - r > tx + tw || cy + r < ty || cy - r > ty + th) return false;
-    // Simple approximation: check distance to center
+    // Approximate by distance to center of bounding box
     const cxRel = cx - (tx + tw/2);
     const cyRel = cy - (ty + th/2);
     return (cxRel*cxRel + cyRel*cyRel) < (r + Math.min(tw, th)/2) ** 2;
   }
 
-  // Main update loop
+  // main game loop
   function update() {
     if(!gameActive || paused || adPlaying) return;
 
+    ctx.clearRect(0, 0, width, height);
     drawBackground();
 
-    // Spawn obstacles
+    // spawn obstacles randomly
     if(Math.random() < 0.012 + currentLevel * 0.005) spawnObstacle();
 
-    // Spawn power-ups
+    // spawn powerups
     if(Math.random() < 0.0015) spawnPowerup();
 
-    // Move obstacles
+    // move obstacles down
     obstacles.forEach(ob => { ob.y += ob.speed; });
     obstacles = obstacles.filter(ob => ob.y < height + 50);
 
-    // Move powerups
+    // move powerups down
     powerups.forEach(pu => { pu.y += pu.speed; });
     powerups = powerups.filter(pu => pu.y < height + 50);
 
-    // Update player movement
+    // move player
     if(player.movingLeft) player.velocityX -= player.acceleration;
     if(player.movingRight) player.velocityX += player.acceleration;
 
-    // Apply friction
     player.velocityX *= player.friction;
     if(Math.abs(player.velocityX) < 0.1) player.velocityX = 0;
-
-    // Clamp speed
     if(player.velocityX > player.maxSpeed) player.velocityX = player.maxSpeed;
     if(player.velocityX < -player.maxSpeed) player.velocityX = -player.maxSpeed;
 
-    // Update position
     player.x += player.velocityX;
 
-    // Keep inside bounds
-    if(player.x < player.radius) {
-      player.x = player.radius;
-      player.velocityX = 0;
-    }
-    if(player.x > width - player.radius) {
-      player.x = width - player.radius;
-      player.velocityX = 0;
-    }
+    // keep inside bounds
+    if(player.x < player.radius) { player.x = player.radius; player.velocityX = 0; }
+    if(player.x > width - player.radius) { player.x = width - player.radius; player.velocityX = 0; }
 
-    // Check collisions with obstacles
+    drawPlayer();
+
+    // check collision with obstacles
     for(const ob of obstacles) {
       let collision = false;
       if(ob.shape === 'rect') {
@@ -451,10 +546,8 @@
         if(player.shield) {
           createParticles(player.x, player.y, 'cyan');
           player.shield = false;
-          powerupActive = null;
-          powerupTimer = 0;
           showMessage('Shield Absorbed Hit!');
-          obstacles = obstacles.filter(o => o !== ob);
+          obstacles.splice(obstacles.indexOf(ob),1);
           if(soundOn) powerupSound.play().catch(() => {});
         } else {
           if(soundOn) {
@@ -463,13 +556,13 @@
           }
           gameActive = false;
           continueAvailable = true;
-          continueScreen.style.display = 'flex';
+          document.getElementById('continue-screen').style.display='flex';
           return;
         }
       }
     }
 
-    // Collisions with power-ups
+    // collision with powerups
     for(let i=powerups.length-1; i>=0; i--) {
       const pu = powerups[i];
       if(circleCircleCollision(player.x, player.y, player.radius, pu.x, pu.y, pu.radius)) {
@@ -479,21 +572,19 @@
         powerups.splice(i,1);
         if(pu.type === 'shield') {
           player.shield = true;
-          player.shieldAlpha = 0; // reset shield alpha
-        } else if(pu.type === 'slow') {
-          // no special property needed
+          player.shieldAlpha = 0;
         }
         showMessage(pu.type === 'shield' ? 'Shield Activated!' : 'Slow Motion Activated!');
       }
     }
 
-    // Slow motion effect
+    // slow motion
     if(powerupActive === 'slow') {
       obstacles.forEach(ob => ob.y -= 1.5);
       powerups.forEach(pu => pu.y -= 1.5);
     }
 
-    // Power-up timer countdown
+    // countdown powerup
     if(powerupTimer > 0) {
       powerupTimer--;
       if(powerupTimer === 0) {
@@ -504,12 +595,10 @@
     }
 
     drawPlayer();
-
     drawObstacles();
-
     drawPowerups();
 
-    // Particles
+    // particles
     particles.forEach(p => {
       ctx.fillStyle = p.color;
       ctx.beginPath();
@@ -523,10 +612,10 @@
     particles = particles.filter(p => p.life > 0 && p.radius > 0.3);
 
     score++;
-    scoreDisplay.textContent = `Score: ${score}`;
+    document.getElementById('score-display').textContent = `Score: ${score}`;
     if(score > highScore) {
       highScore = score;
-      highScoreDisplay.textContent = `High Score: ${highScore}`;
+      document.getElementById('high-score-display').textContent = `High Score: ${highScore}`;
     }
 
     updateLevel();
@@ -548,47 +637,48 @@
     powerupActive = null;
     powerupTimer = 0;
 
-    pauseToggle.textContent = '⏸️';
-    startScreen.style.display = 'none';
-    gameOverScreen.style.display = 'none';
-    continueScreen.style.display = 'none';
-
+    document.getElementById('start-screen').style.display='none';
+    document.getElementById('game-over-screen').style.display='none';
+    document.getElementById('continue-screen').style.display='none';
     if(soundOn) {
       bgMusic.volume = 0.4;
       bgMusic.play().catch(() => {});
     }
+    highScore = Math.max(highScore, score);
     highScoreDisplay.textContent = `High Score: ${highScore}`;
     requestAnimationFrame(update);
   }
 
   function endGame() {
     gameActive = false;
-    finalScoreDisplay.textContent = `Score: ${score}`;
-    gameOverScreen.style.display = 'flex';
-    messageBox.style.opacity = 0;
-    levelMessage.style.opacity = 0;
+    document.getElementById('score-display-final').textContent = `Score: ${score}`;
+    document.getElementById('game-over-screen').style.display='flex';
     bgMusic.pause();
     saveGameData();
   }
 
   // Event listeners
   window.addEventListener('keydown', e => {
-    if(!player) return;
-    if(!gameActive) return;
-    if(e.key === 'ArrowLeft' || e.key === 'a') player.movingLeft = true;
-    if(e.key === 'ArrowRight' || e.key === 'd') player.movingRight = true;
+    if(!player || !gameActive) return;
+    if(e.key==='ArrowLeft' || e.key==='a') player.movingLeft=true;
+    if(e.key==='ArrowRight' || e.key==='d') player.movingRight=true;
   });
-
   window.addEventListener('keyup', e => {
-    if(!player) return;
-    if(!gameActive) return;
-    if(e.key === 'ArrowLeft' || e.key === 'a') player.movingLeft = false;
-    if(e.key === 'ArrowRight' || e.key === 'd') player.movingRight = false;
+    if(!player || !gameActive) return;
+    if(e.key==='ArrowLeft' || e.key==='a') player.movingLeft=false;
+    if(e.key==='ArrowRight' || e.key==='d') player.movingRight=false;
   });
 
-  soundToggle.onclick = () => {
+  document.getElementById('play-btn').onclick = () => {
+    startGame();
+  };
+  document.getElementById('retry-btn').onclick = () => {
+    startGame();
+  };
+
+  document.getElementById('toggle-sound').onclick = () => {
     soundOn = !soundOn;
-    soundToggle.textContent = soundOn ? '🔊' : '🔇';
+    document.getElementById('toggle-sound').textContent = soundOn ? '🔊' : '🔇';
     if(soundOn && gameActive && !paused) {
       bgMusic.play().catch(() => {});
     } else {
@@ -596,83 +686,83 @@
     }
   };
 
-  pauseToggle.onclick = () => {
+  document.getElementById('toggle-pause').onclick = () => {
     if(!gameActive) return;
-    paused = !paused;
-    pauseToggle.textContent = paused ? '▶️' : '⏸️';
-    if(paused) {
-      bgMusic.pause();
-    } else {
+    paused=!paused;
+    document.getElementById('toggle-pause').textContent= paused ? '▶️':'⏸️';
+    if(paused) bgMusic.pause();
+    else {
       if(soundOn) bgMusic.play().catch(() => {});
       requestAnimationFrame(update);
     }
   };
 
-  watchAdBtn.onclick = () => {
+  document.getElementById('watch-ad-btn').onclick = () => {
     if(adPlaying) return;
-    adPlaying = true;
-    watchAdBtn.disabled = true;
-    watchAdBtn.textContent = 'Loading Ad...';
+    adPlaying=true;
+    document.getElementById('watch-ad-btn').disabled=true;
+    document.getElementById('watch-ad-btn').textContent='Loading Ad...';
 
-    // Simulate ad
-    let secondsLeft = 5;
+    let secondsLeft=5;
     const interval = setInterval(() => {
-      watchAdBtn.textContent = `Ad ends in ${secondsLeft--}s`;
-      if(secondsLeft < 0) {
+      document.getElementById('watch-ad-btn').textContent= `Ad ends in ${secondsLeft--}s`;
+      if(secondsLeft<0) {
         clearInterval(interval);
-        continueScreen.style.display = 'none';
+        document.getElementById('continue-screen').style.display='none';
         createPlayer();
-        gameActive = true;
-        paused = false;
-        adPlaying = false;
-        watchAdBtn.disabled = false;
-        watchAdBtn.textContent = 'Watch Ad';
+        gameActive=true;
+        paused=false;
+        adPlaying=false;
+        document.getElementById('watch-ad-btn').disabled=false;
+        document.getElementById('watch-ad-btn').textContent='Watch Ad';
         if(soundOn) bgMusic.play().catch(() => {});
         requestAnimationFrame(update);
       }
     }, 1000);
   };
 
-  noThanksBtn.onclick = () => {
-    continueScreen.style.display = 'none';
+  document.getElementById('no-thanks-btn').onclick= () => {
+    document.getElementById('continue-screen').style.display='none';
     endGame();
   };
 
-  document.getElementById('play-btn').addEventListener('click', () => {
-    startGame();
-  });
+  document.getElementById('store-btn').onclick = () => {
+    renderSkinStore();
+    document.getElementById('skin-store').style.display='flex';
+    document.getElementById('start-screen').style.display='none';
+  };
 
-  document.getElementById('retry-btn').addEventListener('click', () => {
-    startGame();
-  });
+  document.getElementById('close-skin-store-btn').onclick= () => {
+    document.getElementById('skin-store').style.display='none';
+    document.getElementById('start-screen').style.display='flex';
+  };
 
-  // Skin store
+  // Render skins in store
   function renderSkinStore() {
-    skinList.innerHTML = '';
+    skinList.innerHTML='';
     skins.forEach(skin => {
       const btn = document.createElement('button');
-      // Use gradient for skin preview
-      if(skin.colors.length === 3) {
-        btn.style.background = `radial-gradient(circle at center, ${skin.colors.join(',')})`;
+      if(skin.colors.length===3) {
+        btn.style.background= `radial-gradient(circle at center, ${skin.colors.join(',')})`;
       } else {
-        btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
+        btn.style.background= `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
       }
-      btn.innerHTML = `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `$${skin.price}`}</span>`;
-      if(!skin.unlocked && skin.price > 0) {
-        btn.onclick = () => {
-          if(confirm(`Buy ${skin.name} for $${skin.price}? This is a simulation.`)) {
-            skin.unlocked = true;
-            selectedSkin = skin;
+      btn.innerHTML= `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `$${skin.price}`}</span>`;
+      if(!skin.unlocked && skin.price>0) {
+        btn.onclick= ()=> {
+          if(confirm(`Buy ${skin.name} for $${skin.price}?`)) {
+            skin.unlocked=true;
+            selectedSkin=skin;
             saveGameData();
             renderSkinStore();
-            showMessage(`Purchased ${skin.name}!`);
+            showMessage(`Purchased ${skin.name}`);
           }
         };
       } else {
-        btn.onclick = () => {
-          selectedSkin = skin;
-          skinStore.style.display = 'none';
-          startScreen.style.display = 'flex';
+        btn.onclick= ()=> {
+          selectedSkin=skin;
+          document.getElementById('skin-store').style.display='none';
+          document.getElementById('start-screen').style.display='flex';
           saveGameData();
         };
       }
@@ -680,24 +770,12 @@
     });
   }
 
-  storeBtn.onclick = () => {
-    renderSkinStore();
-    skinStore.style.display = 'flex';
-    startScreen.style.display = 'none';
-  };
-
-  closeSkinStoreBtn.onclick = () => {
-    skinStore.style.display = 'none';
-    startScreen.style.display = 'flex';
-  };
-
-  window.addEventListener('resize', resize);
-
   // Initialize game
   loadGameData();
   resize();
   createPlayer();
-  highScoreDisplay.textContent = `High Score: ${highScore}`;
+  highScoreDisplay.textContent=`High Score: ${highScore}`;
+  requestAnimationFrame(update);
 })();
 </script>
 </body>
