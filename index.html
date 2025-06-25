@@ -27,7 +27,7 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-#score-display, #high-score-display {
+#score-display, #high-score-display, #coins-display {
   position: absolute;
   font-size: 1.5rem;
   font-weight: 700;
@@ -44,6 +44,11 @@ body {
 #high-score-display {
   top: 20px;
   right: 20px;
+}
+
+#coins-display {
+    top: 50px;
+    left: 20px;
 }
 
 #level-message {
@@ -79,26 +84,18 @@ body {
   position: absolute;
   top: 70px;
   right: 20px;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   z-index: 10;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
 }
 
 #toggle-pause {
-  right: 80px;
-}
-
-#toggle-sound:hover, #toggle-pause:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  right: 70px;
 }
 
 #start-screen, #game-over-screen, #continue-screen, #skin-store {
@@ -164,12 +161,13 @@ button:disabled {
 }
 
 #skin-store {
-  padding: 20px;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 #skin-store h2 {
-  font-size: 2.5rem;
-  margin-bottom: 30px;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
   background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -178,54 +176,80 @@ button:disabled {
 
 #skin-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  max-width: 800px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 320px;
+  margin: 0 auto 15px auto;
 }
 
 #skin-list button {
-  width: 150px;
-  height: 100px;
+  width: 90px;
+  height: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.8rem;
+  padding: 5px;
 }
 
 .price-tag {
-  font-size: 0.9rem;
+  font-size: 0.7rem;
   opacity: 0.8;
-  margin-top: 5px;
+  margin-top: 2px;
+}
+
+#close-skin-store-btn {
+  padding: 8px 16px;
+  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
   #start-screen div:first-child {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
-  #score-display, #high-score-display {
-    font-size: 1.2rem;
+  #score-display, #high-score-display, #coins-display {
+    font-size: 1rem;
+    top: 10px;
+  }
+  
+  #score-display {
+    left: 10px;
+  }
+
+  #coins-display {
+    top: 35px;
+    left: 10px;
+  }
+  
+  #high-score-display {
+    right: 10px;
   }
   
   #level-message {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
   
   button {
-    padding: 12px 24px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+  
+  #toggle-sound, #toggle-pause {
+    top: 50px;
+    right: 10px;
     font-size: 1rem;
   }
   
-  #skin-list {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  #toggle-pause {
+    right: 50px;
   }
   
-  #skin-list button {
-    width: 120px;
-    height: 80px;
+  #game-canvas {
+    border-radius: 10px;
   }
 }
 </style>
@@ -235,6 +259,7 @@ button:disabled {
 
 <canvas id="game-canvas"></canvas>
 <div id="score-display">Score: 0</div>
+<div id="coins-display">Coins: 0</div>
 <div id="high-score-display"></div>
 <div id="level-message"></div>
 <div id="message-box"></div>
@@ -245,7 +270,7 @@ button:disabled {
   <div>Welcome to Puff Run - Dream Edition</div>
   <button id="play-btn">Start Game</button>
   <button id="store-btn">🎨 Skins</button>
-  <div style="font-size: 1rem; margin-top: 30px; opacity: 0.7;">Use Arrow keys or A/D to move</div>
+  <div style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Use Arrow keys, A/D, or touch screen to move</div>
 </div>
 
 <div id="game-over-screen" style="display:none;">
@@ -271,6 +296,7 @@ button:disabled {
   const ctx = canvas.getContext('2d');
   const scoreDisplay = document.getElementById('score-display');
   const highScoreDisplay = document.getElementById('high-score-display');
+  const coinsDisplay = document.getElementById('coins-display');
   const levelMessage = document.getElementById('level-message');
   const messageBox = document.getElementById('message-box');
   const toggleSoundBtn = document.getElementById('toggle-sound');
@@ -286,6 +312,7 @@ button:disabled {
   let adPlaying = false;
   let score = 0;
   let highScore = 0;
+  let totalCoins = 0;
   let currentLevel = 1;
   let obstacles = [];
   let powerups = [];
@@ -298,56 +325,53 @@ button:disabled {
 
   const skins = [
     { name: 'Classic', colors: ['#ff6b6b', '#4ecdc4'], unlocked: true, price: 0 },
-    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 10 },
-    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 15 },
-    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 20 },
-    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 25 }
+    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 1000 },
+    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 1500 },
+    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 2000 },
+    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 2500 }
   ];
 
   let selectedSkin = skins[0];
 
-  function resize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-  }
-
   function saveGameData() {
     const data = {
       highScore: highScore,
-      skins: skins,
-      selectedSkin: selectedSkin
+      totalCoins: totalCoins,
+      unlockedSkins: skins.filter(s => s.unlocked).map(s => s.name),
+      selectedSkinName: selectedSkin.name
     };
     try {
-      // Memory storage only
-      window.gameData = data;
+      localStorage.setItem('puffRunSaveData', JSON.stringify(data));
     } catch (e) {
-      console.log('Storage not available');
+      console.error('Could not save game data to localStorage.', e);
     }
   }
 
   function loadGameData() {
     try {
-      const data = window.gameData;
-      if (data) {
+      const savedDataJSON = localStorage.getItem('puffRunSaveData');
+      if (savedDataJSON) {
+        const data = JSON.parse(savedDataJSON);
         highScore = data.highScore || 0;
-        if (data.skins) {
-          data.skins.forEach((skin, index) => {
-            if (skins[index]) {
-              skins[index].unlocked = skin.unlocked;
+        totalCoins = data.totalCoins || 0;
+        
+        if (data.unlockedSkins) {
+          skins.forEach(skin => {
+            if (data.unlockedSkins.includes(skin.name)) {
+              skin.unlocked = true;
             }
           });
         }
-        if (data.selectedSkin) {
-          const found = skins.find(s => s.name === data.selectedSkin.name);
+        
+        if (data.selectedSkinName) {
+          const found = skins.find(s => s.name === data.selectedSkinName);
           if (found && found.unlocked) {
             selectedSkin = found;
           }
         }
       }
     } catch (e) {
-      console.log('Could not load game data');
+      console.error('Could not load game data from localStorage.', e);
     }
   }
 
@@ -369,18 +393,62 @@ button:disabled {
   }
 
   function drawBackground() {
+    const time = Date.now() * 0.002;
+    
     const gradient = ctx.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, '#667eea');
-    gradient.addColorStop(1, '#764ba2');
+    gradient.addColorStop(0.3, '#764ba2');
+    gradient.addColorStop(0.7, '#5f27cd');
+    gradient.addColorStop(1, '#341f97');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-    for (let i = 0; i < 100; i++) {
-      const x = Math.random() * width;
-      const y = Math.random() * height;
-      const size = Math.random() * 3;
-      ctx.fillRect(x, y, size, size);
+    for (let i = 0; i < 200; i++) {
+      const x = (Math.sin(time + i * 0.1) * 50 + width * (i % 7) / 7);
+      const y = (Math.cos(time * 0.5 + i * 0.2) * 30 + height * (i % 5) / 5);
+      const size = Math.sin(time + i * 0.3) * 2 + 3;
+      const alpha = Math.sin(time + i * 0.15) * 0.3 + 0.4;
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = i % 3 === 0 ? '#ff6b6b' : i % 3 === 1 ? '#4ecdc4' : '#feca57';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    for (let i = 0; i < 50; i++) {
+      const x = (Math.sin(time * 0.3 + i * 0.5) * 100 + width / 2);
+      const y = (Math.cos(time * 0.4 + i * 0.3) * 80 + height / 2);
+      const rotation = time + i * 0.1;
+      const size = Math.sin(time + i * 0.2) * 15 + 20;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.globalAlpha = 0.1;
+      
+      const starGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+      starGradient.addColorStop(0, '#ffffff');
+      starGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = starGradient;
+      
+      ctx.beginPath();
+      for (let j = 0; j < 5; j++) {
+        const angle = (j * Math.PI * 2) / 5;
+        const x1 = Math.cos(angle) * size;
+        const y1 = Math.sin(angle) * size;
+        const x2 = Math.cos(angle + Math.PI / 5) * size * 0.5;
+        const y2 = Math.sin(angle + Math.PI / 5) * size * 0.5;
+        
+        if (j === 0) ctx.moveTo(x1, y1);
+        else ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
   }
 
@@ -426,8 +494,38 @@ button:disabled {
 
   function drawObstacles() {
     obstacles.forEach(obstacle => {
-      ctx.fillStyle = obstacle.color;
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      ctx.save();
+      ctx.translate(obstacle.x + obstacle.width/2, obstacle.y + obstacle.height/2);
+      ctx.rotate(obstacle.rotation);
+      
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, obstacle.width/2);
+      gradient.addColorStop(0, obstacle.color);
+      gradient.addColorStop(1, '#2d3436');
+      ctx.fillStyle = gradient;
+      
+      if (obstacle.type === 'circle') {
+        ctx.beginPath();
+        ctx.arc(0, 0, obstacle.width/2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (obstacle.type === 'triangle') {
+        ctx.beginPath();
+        ctx.moveTo(0, -obstacle.height/2);
+        ctx.lineTo(-obstacle.width/2, obstacle.height/2);
+        ctx.lineTo(obstacle.width/2, obstacle.height/2);
+        ctx.closePath();
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.roundRect(-obstacle.width/2, -obstacle.height/2, obstacle.width, obstacle.height, 8);
+        ctx.fill();
+      }
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      ctx.restore();
+      obstacle.rotation += 0.05;
     });
   }
 
@@ -481,18 +579,19 @@ button:disabled {
   }
 
   function spawnObstacle() {
-    const types = ['rect', 'circle', 'triangle'];
+    const types = ['circle', 'triangle', 'rect'];
     const type = types[Math.floor(Math.random() * types.length)];
     const colors = ['#ff6b6b', '#e17055', '#d63031'];
     
     obstacles.push({
-      x: Math.random() * (width - 80),
-      y: -50,
-      width: 60 + Math.random() * 40,
-      height: 20 + Math.random() * 30,
+      x: Math.random() * (width - 50),
+      y: -40,
+      width: 30 + Math.random() * 20,
+      height: 30 + Math.random() * 20,
       speed: 3 + currentLevel * 0.5,
       type: type,
-      color: colors[Math.floor(Math.random() * colors.length)]
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: 0
     });
   }
 
@@ -513,26 +612,30 @@ button:disabled {
   }
 
   function checkCollisions() {
-    if (!player || player.shield) return;
+    if (!player) return;
 
-    obstacles.forEach((obstacle, index) => {
-      const dx = player.x - (obstacle.x + obstacle.width/2);
-      const dy = player.y - (obstacle.y + obstacle.height/2);
-      const distance = Math.sqrt(dx*dx + dy*dy);
-      
-      if (distance < player.radius + obstacle.width/2) {
-        createParticles(player.x, player.y, '#ff6b6b', 15);
-        if (soundOn) hitSound.play().catch(() => {});
-        
-        if (!continueAvailable) {
-          continueAvailable = true;
-          gameActive = false;
-          document.getElementById('continue-screen').style.display = 'flex';
-        } else {
-          endGame();
-        }
-      }
-    });
+    // Check obstacle collision only if shield is not active
+    if (!player.shield) {
+        obstacles.forEach((obstacle) => {
+          const dx = player.x - (obstacle.x + obstacle.width/2);
+          const dy = player.y - (obstacle.y + obstacle.height/2);
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          
+          if (distance < player.radius + obstacle.width/2) {
+            createParticles(player.x, player.y, '#ff6b6b', 15);
+            if (soundOn) hitSound.play().catch(() => {});
+            
+            if (!continueAvailable) {
+              continueAvailable = true;
+              gameActive = false;
+              paused = true; // Pause game logic
+              document.getElementById('continue-screen').style.display = 'flex';
+            } else {
+              endGame();
+            }
+          }
+        });
+    }
 
     powerups.forEach((powerup, index) => {
       const dx = player.x - (powerup.x + powerup.size/2);
@@ -565,6 +668,7 @@ button:disabled {
         break;
       case 'points':
         score += 50;
+        updateDisplays();
         showMessage('+50 Points!');
         break;
     }
@@ -655,22 +759,33 @@ button:disabled {
     updatePowerups();
     checkCollisions();
     
-    scoreDisplay.textContent = `Score: ${score}`;
+    updateDisplays();
+  }
+  
+  function updateDisplays() {
+      scoreDisplay.textContent = `Score: ${score}`;
+      highScoreDisplay.textContent = `High Score: ${highScore}`;
+      coinsDisplay.textContent = `Coins: ${totalCoins}`;
   }
 
-  function update() {
-    if (!gameActive || paused || adPlaying) return;
-
-    ctx.clearRect(0, 0, width, height);
-    drawBackground();
-    drawPlayer();
-    drawObstacles();
-    drawPowerups();
-    drawParticles();
+  function gameLoop() {
+    if (!gameActive || adPlaying) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
     
-    updateGame();
+    if(!paused) {
+        ctx.clearRect(0, 0, width, height);
+        drawBackground();
+        drawPlayer();
+        drawObstacles();
+        drawPowerups();
+        drawParticles();
+        
+        updateGame();
+    }
     
-    requestAnimationFrame(update);
+    requestAnimationFrame(gameLoop);
   }
 
   function startGame() {
@@ -692,24 +807,26 @@ button:disabled {
     document.getElementById('continue-screen').style.display = 'none';
     
     if (soundOn) {
+      bgMusic.loop = true;
       bgMusic.volume = 0.4;
       bgMusic.play().catch(() => {});
     }
     
-    updateHighScoreDisplays();
-    requestAnimationFrame(update);
+    updateDisplays();
   }
 
   function endGame() {
     gameActive = false;
+    paused = true;
+    totalCoins += score;
     if (score > highScore) {
       highScore = score;
-      highScoreDisplay.textContent = `High Score: ${highScore}`;
     }
-    document.getElementById('score-display-final').textContent = `Score: ${score}`;
+    document.getElementById('score-display-final').textContent = `Final Score: ${score}`;
     document.getElementById('game-over-screen').style.display = 'flex';
     bgMusic.pause();
     saveGameData();
+    updateDisplays();
   }
 
   function renderSkinStore() {
@@ -721,36 +838,49 @@ button:disabled {
       } else {
         btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
       }
-      btn.innerHTML = `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `$${skin.price}`}</span>`;
       
-      if (!skin.unlocked && skin.price > 0) {
-        btn.onclick = () => {
-          if (confirm(`Buy ${skin.name} for $${skin.price}?`)) {
-            skin.unlocked = true;
+      const statusText = skin.unlocked ? '✔️ Owned' : `🪙 ${skin.price}`;
+      btn.innerHTML = `${skin.name}<br><span class="price-tag">${statusText}</span>`;
+      
+      btn.onclick = () => {
+        if(skin.unlocked) {
             selectedSkin = skin;
             saveGameData();
-            renderSkinStore();
-            showMessage(`Purchased ${skin.name}`);
-          }
-        };
-      } else {
-        btn.onclick = () => {
-          selectedSkin = skin;
-          saveGameData();
-          document.getElementById('skin-store').style.display = 'none';
-          document.getElementById('start-screen').style.display = 'flex';
-        };
-      }
+            showMessage(`Selected ${skin.name}`);
+            document.getElementById('skin-store').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+        } else {
+            if (totalCoins >= skin.price) {
+                if (confirm(`Buy ${skin.name} for ${skin.price} coins?`)) {
+                    totalCoins -= skin.price;
+                    skin.unlocked = true;
+                    selectedSkin = skin;
+                    saveGameData();
+                    updateDisplays();
+                    renderSkinStore(); // Re-render the store to update the button
+                    showMessage(`Purchased ${skin.name}`);
+                }
+            } else {
+                showMessage(`Not enough coins! You need ${skin.price}.`);
+            }
+        }
+      };
       skinList.appendChild(btn);
     });
   }
 
-  function updateHighScoreDisplays() {
-    highScoreDisplay.textContent = `High Score: ${highScore}`;
-    if (document.getElementById('score-display-final')) {
-      document.getElementById('score-display-final').textContent = `Score: ${score}`;
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    if (player) {
+      player.y = height - 75;
+      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
     }
   }
+
+  window.addEventListener('resize', resize);
 
   window.addEventListener('keydown', e => {
     if (!player || !gameActive || paused || adPlaying) return;
@@ -764,13 +894,30 @@ button:disabled {
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') player.movingRight = false;
   });
 
-  window.addEventListener('resize', () => {
-    resize();
-    if (player) {
-      player.y = height - player.radius - 50;
-      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
+  canvas.addEventListener('touchstart', e => {
+    if (!player || !gameActive || paused || adPlaying) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    
+    if (touchX < width / 2) {
+      player.movingLeft = true;
+    } else {
+      player.movingRight = true;
     }
-  });
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    if (!player) return;
+    e.preventDefault();
+    player.movingLeft = false;
+    player.movingRight = false;
+  }, { passive: false });
+  
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+  }, { passive: false });
 
   document.getElementById('play-btn').onclick = startGame;
   document.getElementById('retry-btn').onclick = startGame;
@@ -797,20 +944,28 @@ button:disabled {
     document.getElementById('watch-ad-btn').disabled = true;
     document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
 
-    let secondsLeft = 5;
+    // This is still a placeholder. A real ad SDK would have its own callbacks.
+    let secondsLeft = 3;
     const interval = setInterval(() => {
       document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
       if (secondsLeft < 0) {
         clearInterval(interval);
         document.getElementById('continue-screen').style.display = 'none';
-        createPlayer();
+        
+        // Reset player state to continue
+        createPlayer(); // Recreate the player
+        player.shield = true; // Give a temporary shield after ad
+        powerupActive = 'shield';
+        powerupTimer = 150; // 2.5 seconds shield
+        
         gameActive = true;
         paused = false;
         adPlaying = false;
+        continueAvailable = true; // Prevent another ad offer right away
+        
         document.getElementById('watch-ad-btn').disabled = false;
         document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
         if (soundOn) bgMusic.play().catch(() => {});
-        requestAnimationFrame(update);
       }
     }, 1000);
   };
@@ -819,7 +974,7 @@ button:disabled {
     soundOn = !soundOn;
     toggleSoundBtn.textContent = soundOn ? '🔊' : '🔇';
     if (soundOn) {
-      if (gameActive) bgMusic.play().catch(() => {});
+      if (gameActive && !paused) bgMusic.play().catch(() => {});
     } else {
       bgMusic.pause();
     }
@@ -831,17 +986,16 @@ button:disabled {
     togglePauseBtn.textContent = paused ? '▶️' : '⏸️';
     if (!paused) {
       if (soundOn) bgMusic.play().catch(() => {});
-      requestAnimationFrame(update);
     } else {
       bgMusic.pause();
     }
   };
-
+  
+  // Initial setup
   loadGameData();
   resize();
-  createPlayer();
-  updateHighScoreDisplays();
-  requestAnimationFrame(update);
+  updateDisplays();
+  gameLoop();
 
 })();
 </script>
