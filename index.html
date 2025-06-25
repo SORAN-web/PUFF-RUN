@@ -5,7 +5,229 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Puff Run - Dream Edition Super Advanced</title>
 <style>
-  /* ... [UNCHANGED STYLES, omitted for brevity] ... */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Rubik', sans-serif;
+  overflow: hidden;
+  color: white;
+}
+
+#game-canvas {
+  display: block;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#score-display, #high-score-display {
+  position: absolute;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+#score-display {
+  top: 20px;
+  left: 20px;
+}
+
+#high-score-display {
+  top: 20px;
+  right: 20px;
+}
+
+#level-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ff6b6b;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#message-box {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #4ecdc4;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#toggle-sound, #toggle-pause {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+#toggle-pause {
+  right: 80px;
+}
+
+#toggle-sound:hover, #toggle-pause:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+#start-screen, #game-over-screen, #continue-screen, #skin-store {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  backdrop-filter: blur(20px);
+}
+
+#start-screen div:first-child {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  text-align: center;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+button {
+  padding: 15px 30px;
+  margin: 10px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: 'Rubik', sans-serif;
+  border: none;
+  border-radius: 25px;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+button:active {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#skin-store {
+  padding: 20px;
+}
+
+#skin-store h2 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#skin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  max-width: 800px;
+  margin-bottom: 30px;
+}
+
+#skin-list button {
+  width: 150px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.price-tag {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+  #start-screen div:first-child {
+    font-size: 2rem;
+  }
+  
+  #score-display, #high-score-display {
+    font-size: 1.2rem;
+  }
+  
+  #level-message {
+    font-size: 2rem;
+  }
+  
+  button {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+  
+  #skin-list {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+  
+  #skin-list button {
+    width: 120px;
+    height: 80px;
+  }
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700&display=swap" rel="stylesheet" />
 </head>
@@ -43,29 +265,92 @@
   <button id="close-skin-store-btn">Close</button>
 </div>
 
-<!-- Audio -->
-<audio id="bg-music" loop preload="auto" src="long-file.mp3"></audio>
-<audio id="hit-sound" preload="auto" src="short-file.mp3"></audio>
-<audio id="powerup-sound" preload="auto" src="powerup.mp3"></audio>
-
 <script>
 (() => {
-  // ... [SAME AS BEFORE for most parts, only showing changes/fixes] ...
+  const canvas = document.getElementById('game-canvas');
+  const ctx = canvas.getContext('2d');
+  const scoreDisplay = document.getElementById('score-display');
+  const highScoreDisplay = document.getElementById('high-score-display');
+  const levelMessage = document.getElementById('level-message');
+  const messageBox = document.getElementById('message-box');
+  const toggleSoundBtn = document.getElementById('toggle-sound');
+  const togglePauseBtn = document.getElementById('toggle-pause');
+  const bgMusic = new Audio();
+  const hitSound = new Audio();
+  const powerupSound = new Audio();
+  const skinList = document.getElementById('skin-list');
 
-  // [1] Fix: Properly update high score after game over and save it
-  function endGame() {
-    gameActive = false;
-    if (score > highScore) {
-      highScore = score;
-      highScoreDisplay.textContent = `High Score: ${highScore}`;
-    }
-    document.getElementById('score-display-final').textContent = `Score: ${score}`;
-    document.getElementById('game-over-screen').style.display='flex';
-    bgMusic.pause();
-    saveGameData();
+  let width, height;
+  let gameActive = false;
+  let paused = false;
+  let adPlaying = false;
+  let score = 0;
+  let highScore = 0;
+  let currentLevel = 1;
+  let obstacles = [];
+  let powerups = [];
+  let particles = [];
+  let player = null;
+  let soundOn = true;
+  let continueAvailable = false;
+  let powerupActive = null;
+  let powerupTimer = 0;
+
+  const skins = [
+    { name: 'Classic', colors: ['#ff6b6b', '#4ecdc4'], unlocked: true, price: 0 },
+    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 10 },
+    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 15 },
+    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 20 },
+    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 25 }
+  ];
+
+  let selectedSkin = skins[0];
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
   }
 
-  // [2] Fix: Reset player movement flags on game start/continue
+  function saveGameData() {
+    const data = {
+      highScore: highScore,
+      skins: skins,
+      selectedSkin: selectedSkin
+    };
+    try {
+      // Memory storage only
+      window.gameData = data;
+    } catch (e) {
+      console.log('Storage not available');
+    }
+  }
+
+  function loadGameData() {
+    try {
+      const data = window.gameData;
+      if (data) {
+        highScore = data.highScore || 0;
+        if (data.skins) {
+          data.skins.forEach((skin, index) => {
+            if (skins[index]) {
+              skins[index].unlocked = skin.unlocked;
+            }
+          });
+        }
+        if (data.selectedSkin) {
+          const found = skins.find(s => s.name === data.selectedSkin.name);
+          if (found && found.unlocked) {
+            selectedSkin = found;
+          }
+        }
+      }
+    } catch (e) {
+      console.log('Could not load game data');
+    }
+  }
+
   function createPlayer() {
     player = {
       x: width/2,
@@ -83,127 +368,311 @@
     };
   }
 
-  // [3] Fix: Prevent player from moving on screens other than active gameplay
-  window.addEventListener('keydown', e => {
-    if(!player || !gameActive || paused || adPlaying) return;
-    if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') player.movingLeft=true;
-    if(e.key==='ArrowRight' || e.key==='d' || e.key==='D') player.movingRight=true;
-  });
-  window.addEventListener('keyup', e => {
-    if(!player || !gameActive || paused || adPlaying) return;
-    if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') player.movingLeft=false;
-    if(e.key==='ArrowRight' || e.key==='d' || e.key==='D') player.movingRight=false;
-  });
+  function drawBackground() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
 
-  // [4] Fix: Always call saveGameData() after purchasing or selecting skin 
-  function renderSkinStore() {
-    skinList.innerHTML='';
-    skins.forEach(skin => {
-      const btn = document.createElement('button');
-      if(skin.colors.length===3) {
-        btn.style.background= `radial-gradient(circle at center, ${skin.colors.join(',')})`;
-      } else {
-        btn.style.background= `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
-      }
-      btn.innerHTML= `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `$${skin.price}`}</span>`;
-      if(!skin.unlocked && skin.price>0) {
-        btn.onclick= ()=> {
-          if(confirm(`Buy ${skin.name} for $${skin.price}?`)) {
-            skin.unlocked=true;
-            selectedSkin=skin;
-            saveGameData();
-            renderSkinStore();
-            showMessage(`Purchased ${skin.name}`);
-          }
-        };
-      } else {
-        btn.onclick= ()=> {
-          selectedSkin=skin;
-          saveGameData();
-          document.getElementById('skin-store').style.display='none';
-          document.getElementById('start-screen').style.display='flex';
-        };
-      }
-      skinList.appendChild(btn);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    for (let i = 0; i < 100; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const size = Math.random() * 3;
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+
+  function drawPlayer() {
+    if (!player) return;
+
+    ctx.save();
+    ctx.translate(player.x, player.y);
+
+    if (player.shield) {
+      ctx.globalAlpha = player.shieldAlpha;
+      ctx.strokeStyle = '#4ecdc4';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, player.radius + 10, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, player.radius);
+    if (player.colors.length === 3) {
+      gradient.addColorStop(0, player.colors[0]);
+      gradient.addColorStop(0.5, player.colors[1]);
+      gradient.addColorStop(1, player.colors[2]);
+    } else {
+      gradient.addColorStop(0, player.colors[0]);
+      gradient.addColorStop(1, player.colors[1]);
+    }
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.arc(-8, -8, player.radius * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawObstacles() {
+    obstacles.forEach(obstacle => {
+      ctx.fillStyle = obstacle.color;
+      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     });
   }
 
-  // [5] Fix: When continuing after ad, keep score and obstacles rather than a fresh start
-  document.getElementById('watch-ad-btn').onclick = () => {
-    if(adPlaying) return;
-    adPlaying=true;
-    document.getElementById('watch-ad-btn').disabled=true;
-    document.getElementById('watch-ad-btn').textContent='Loading Ad...';
+  function drawPowerups() {
+    powerups.forEach(powerup => {
+      ctx.save();
+      ctx.translate(powerup.x + powerup.size/2, powerup.y + powerup.size/2);
+      ctx.rotate(powerup.rotation);
+      
+      ctx.fillStyle = powerup.color;
+      ctx.fillRect(-powerup.size/2, -powerup.size/2, powerup.size, powerup.size);
+      
+      ctx.restore();
+      powerup.rotation += 0.1;
+    });
+  }
 
-    let secondsLeft=5;
-    const interval = setInterval(() => {
-      document.getElementById('watch-ad-btn').textContent= `Ad ends in ${secondsLeft--}s`;
-      if(secondsLeft<0) {
-        clearInterval(interval);
-        document.getElementById('continue-screen').style.display='none';
-        createPlayer();
-        // Don't reset score, obstacles, or powerups here (continue where left off)
-        gameActive=true;
-        paused=false;
-        adPlaying=false;
-        document.getElementById('watch-ad-btn').disabled=false;
-        document.getElementById('watch-ad-btn').textContent='Watch Ad';
-        if(soundOn) bgMusic.play().catch(() => {});
-        requestAnimationFrame(update);
+  function drawParticles() {
+    particles.forEach((particle, index) => {
+      ctx.save();
+      ctx.globalAlpha = particle.alpha;
+      ctx.fillStyle = particle.color;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      particle.x += particle.velocityX;
+      particle.y += particle.velocityY;
+      particle.alpha -= 0.02;
+      particle.size *= 0.98;
+
+      if (particle.alpha <= 0) {
+        particles.splice(index, 1);
       }
-    }, 1000);
-  };
+    });
+  }
 
-  // [6] Fix: Responsive resizing on window resize
-  window.addEventListener('resize', () => {
-    resize();
-    // Don't reset player on resize, just reposition to fit new screen
-    if (player) {
-      player.y = height - player.radius - 50;
-      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
+  function createParticles(x, y, color, count = 10) {
+    for (let i = 0; i < count; i++) {
+      particles.push({
+        x: x,
+        y: y,
+        velocityX: (Math.random() - 0.5) * 10,
+        velocityY: (Math.random() - 0.5) * 10,
+        alpha: 1,
+        size: Math.random() * 8 + 2,
+        color: color
+      });
     }
-  });
+  }
 
-  // [7] Fix: Avoid double-drawing player (was called twice in update())
-  // Remove the first call to drawPlayer() in update()
+  function spawnObstacle() {
+    const types = ['rect', 'circle', 'triangle'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const colors = ['#ff6b6b', '#e17055', '#d63031'];
+    
+    obstacles.push({
+      x: Math.random() * (width - 80),
+      y: -50,
+      width: 60 + Math.random() * 40,
+      height: 20 + Math.random() * 30,
+      speed: 3 + currentLevel * 0.5,
+      type: type,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+
+  function spawnPowerup() {
+    const types = ['shield', 'slow', 'points'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    const colors = { shield: '#4ecdc4', slow: '#45b7d1', points: '#f39c12' };
+    
+    powerups.push({
+      x: Math.random() * (width - 40),
+      y: -30,
+      size: 25,
+      speed: 2 + currentLevel * 0.3,
+      type: type,
+      color: colors[type],
+      rotation: 0
+    });
+  }
+
+  function checkCollisions() {
+    if (!player || player.shield) return;
+
+    obstacles.forEach((obstacle, index) => {
+      const dx = player.x - (obstacle.x + obstacle.width/2);
+      const dy = player.y - (obstacle.y + obstacle.height/2);
+      const distance = Math.sqrt(dx*dx + dy*dy);
+      
+      if (distance < player.radius + obstacle.width/2) {
+        createParticles(player.x, player.y, '#ff6b6b', 15);
+        if (soundOn) hitSound.play().catch(() => {});
+        
+        if (!continueAvailable) {
+          continueAvailable = true;
+          gameActive = false;
+          document.getElementById('continue-screen').style.display = 'flex';
+        } else {
+          endGame();
+        }
+      }
+    });
+
+    powerups.forEach((powerup, index) => {
+      const dx = player.x - (powerup.x + powerup.size/2);
+      const dy = player.y - (powerup.y + powerup.size/2);
+      const distance = Math.sqrt(dx*dx + dy*dy);
+      
+      if (distance < player.radius + powerup.size/2) {
+        createParticles(powerup.x, powerup.y, powerup.color, 8);
+        if (soundOn) powerupSound.play().catch(() => {});
+        
+        activatePowerup(powerup.type);
+        powerups.splice(index, 1);
+      }
+    });
+  }
+
+  function activatePowerup(type) {
+    powerupActive = type;
+    powerupTimer = 300;
+    
+    switch (type) {
+      case 'shield':
+        player.shield = true;
+        player.shieldAlpha = 0.8;
+        showMessage('Shield Active!');
+        break;
+      case 'slow':
+        obstacles.forEach(obs => obs.speed *= 0.5);
+        showMessage('Time Slowed!');
+        break;
+      case 'points':
+        score += 50;
+        showMessage('+50 Points!');
+        break;
+    }
+  }
+
+  function updatePowerups() {
+    if (powerupActive && powerupTimer > 0) {
+      powerupTimer--;
+      
+      if (powerupActive === 'shield' && player.shield) {
+        player.shieldAlpha = Math.sin(powerupTimer * 0.2) * 0.3 + 0.5;
+      }
+      
+      if (powerupTimer === 0) {
+        if (powerupActive === 'shield') {
+          player.shield = false;
+          player.shieldAlpha = 0;
+        } else if (powerupActive === 'slow') {
+          obstacles.forEach(obs => obs.speed *= 2);
+        }
+        powerupActive = null;
+      }
+    }
+  }
+
+  function showMessage(text) {
+    messageBox.textContent = text;
+    messageBox.style.opacity = '1';
+    setTimeout(() => {
+      messageBox.style.opacity = '0';
+    }, 2000);
+  }
+
+  function showLevelMessage(level) {
+    levelMessage.textContent = `Level ${level}`;
+    levelMessage.style.opacity = '1';
+    setTimeout(() => {
+      levelMessage.style.opacity = '0';
+    }, 2000);
+  }
+
+  function updateGame() {
+    if (!player) return;
+
+    if (player.movingLeft) {
+      player.velocityX -= player.acceleration;
+    }
+    if (player.movingRight) {
+      player.velocityX += player.acceleration;
+    }
+
+    player.velocityX *= player.friction;
+    player.velocityX = Math.max(-player.maxSpeed, Math.min(player.maxSpeed, player.velocityX));
+    
+    player.x += player.velocityX;
+    player.x = Math.max(player.radius, Math.min(width - player.radius, player.x));
+
+    obstacles.forEach((obstacle, index) => {
+      obstacle.y += obstacle.speed;
+      if (obstacle.y > height) {
+        obstacles.splice(index, 1);
+        score += 10;
+      }
+    });
+
+    powerups.forEach((powerup, index) => {
+      powerup.y += powerup.speed;
+      if (powerup.y > height) {
+        powerups.splice(index, 1);
+      }
+    });
+
+    if (Math.random() < 0.015 + currentLevel * 0.002) {
+      spawnObstacle();
+    }
+
+    if (Math.random() < 0.005) {
+      spawnPowerup();
+    }
+
+    const newLevel = Math.floor(score / 200) + 1;
+    if (newLevel > currentLevel) {
+      currentLevel = newLevel;
+      showLevelMessage(currentLevel);
+      player.maxSpeed = 10 + currentLevel * 0.3;
+    }
+
+    updatePowerups();
+    checkCollisions();
+    
+    scoreDisplay.textContent = `Score: ${score}`;
+  }
+
   function update() {
-    if(!gameActive || paused || adPlaying) return;
+    if (!gameActive || paused || adPlaying) return;
 
     ctx.clearRect(0, 0, width, height);
     drawBackground();
-
-    // ... [rest is unchanged] ...
-
-    // Remove first drawPlayer();
-    // drawPlayer();
-
-    // ... [rest unchanged] ...
-
     drawPlayer();
     drawObstacles();
     drawPowerups();
-
-    // ... [rest unchanged] ...
+    drawParticles();
+    
+    updateGame();
+    
     requestAnimationFrame(update);
   }
 
-  // [8] Fix: High score display always correct on start screen, game over, and in-game
-  function updateHighScoreDisplays() {
-    highScoreDisplay.textContent=`High Score: ${highScore}`;
-    if(document.getElementById('score-display-final')) {
-      document.getElementById('score-display-final').textContent = `Score: ${score}`;
-    }
-  }
-
-  // Call updateHighScoreDisplays at all relevant places
-  // After loading data:
-  loadGameData();
-  resize();
-  createPlayer();
-  updateHighScoreDisplays();
-  requestAnimationFrame(update);
-
-  // In startGame and endGame, after updating highScore, call updateHighScoreDisplays
   function startGame() {
     score = 0;
     currentLevel = 1;
@@ -218,21 +687,161 @@
     powerupActive = null;
     powerupTimer = 0;
 
-    document.getElementById('start-screen').style.display='none';
-    document.getElementById('game-over-screen').style.display='none';
-    document.getElementById('continue-screen').style.display='none';
-    if(soundOn) {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('game-over-screen').style.display = 'none';
+    document.getElementById('continue-screen').style.display = 'none';
+    
+    if (soundOn) {
       bgMusic.volume = 0.4;
       bgMusic.play().catch(() => {});
     }
-    if (score > highScore) {
-      highScore = score;
-    }
+    
     updateHighScoreDisplays();
     requestAnimationFrame(update);
   }
 
-  // The rest of your logic is unchanged
+  function endGame() {
+    gameActive = false;
+    if (score > highScore) {
+      highScore = score;
+      highScoreDisplay.textContent = `High Score: ${highScore}`;
+    }
+    document.getElementById('score-display-final').textContent = `Score: ${score}`;
+    document.getElementById('game-over-screen').style.display = 'flex';
+    bgMusic.pause();
+    saveGameData();
+  }
+
+  function renderSkinStore() {
+    skinList.innerHTML = '';
+    skins.forEach(skin => {
+      const btn = document.createElement('button');
+      if (skin.colors.length === 3) {
+        btn.style.background = `radial-gradient(circle at center, ${skin.colors.join(',')})`;
+      } else {
+        btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
+      }
+      btn.innerHTML = `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `$${skin.price}`}</span>`;
+      
+      if (!skin.unlocked && skin.price > 0) {
+        btn.onclick = () => {
+          if (confirm(`Buy ${skin.name} for $${skin.price}?`)) {
+            skin.unlocked = true;
+            selectedSkin = skin;
+            saveGameData();
+            renderSkinStore();
+            showMessage(`Purchased ${skin.name}`);
+          }
+        };
+      } else {
+        btn.onclick = () => {
+          selectedSkin = skin;
+          saveGameData();
+          document.getElementById('skin-store').style.display = 'none';
+          document.getElementById('start-screen').style.display = 'flex';
+        };
+      }
+      skinList.appendChild(btn);
+    });
+  }
+
+  function updateHighScoreDisplays() {
+    highScoreDisplay.textContent = `High Score: ${highScore}`;
+    if (document.getElementById('score-display-final')) {
+      document.getElementById('score-display-final').textContent = `Score: ${score}`;
+    }
+  }
+
+  window.addEventListener('keydown', e => {
+    if (!player || !gameActive || paused || adPlaying) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') player.movingLeft = true;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') player.movingRight = true;
+  });
+
+  window.addEventListener('keyup', e => {
+    if (!player) return;
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') player.movingLeft = false;
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') player.movingRight = false;
+  });
+
+  window.addEventListener('resize', () => {
+    resize();
+    if (player) {
+      player.y = height - player.radius - 50;
+      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
+    }
+  });
+
+  document.getElementById('play-btn').onclick = startGame;
+  document.getElementById('retry-btn').onclick = startGame;
+
+  document.getElementById('store-btn').onclick = () => {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('skin-store').style.display = 'flex';
+    renderSkinStore();
+  };
+
+  document.getElementById('close-skin-store-btn').onclick = () => {
+    document.getElementById('skin-store').style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+  };
+
+  document.getElementById('no-thanks-btn').onclick = () => {
+    document.getElementById('continue-screen').style.display = 'none';
+    endGame();
+  };
+
+  document.getElementById('watch-ad-btn').onclick = () => {
+    if (adPlaying) return;
+    adPlaying = true;
+    document.getElementById('watch-ad-btn').disabled = true;
+    document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
+
+    let secondsLeft = 5;
+    const interval = setInterval(() => {
+      document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
+      if (secondsLeft < 0) {
+        clearInterval(interval);
+        document.getElementById('continue-screen').style.display = 'none';
+        createPlayer();
+        gameActive = true;
+        paused = false;
+        adPlaying = false;
+        document.getElementById('watch-ad-btn').disabled = false;
+        document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
+        if (soundOn) bgMusic.play().catch(() => {});
+        requestAnimationFrame(update);
+      }
+    }, 1000);
+  };
+
+  toggleSoundBtn.onclick = () => {
+    soundOn = !soundOn;
+    toggleSoundBtn.textContent = soundOn ? '🔊' : '🔇';
+    if (soundOn) {
+      if (gameActive) bgMusic.play().catch(() => {});
+    } else {
+      bgMusic.pause();
+    }
+  };
+
+  togglePauseBtn.onclick = () => {
+    if (!gameActive) return;
+    paused = !paused;
+    togglePauseBtn.textContent = paused ? '▶️' : '⏸️';
+    if (!paused) {
+      if (soundOn) bgMusic.play().catch(() => {});
+      requestAnimationFrame(update);
+    } else {
+      bgMusic.pause();
+    }
+  };
+
+  loadGameData();
+  resize();
+  createPlayer();
+  updateHighScoreDisplays();
+  requestAnimationFrame(update);
 
 })();
 </script>
