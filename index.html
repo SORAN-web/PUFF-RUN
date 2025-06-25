@@ -27,7 +27,7 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-#score-display, #high-score-display, #coins-display {
+#score-display, #high-score-display {
   position: absolute;
   font-size: 1.5rem;
   font-weight: 700;
@@ -44,11 +44,6 @@ body {
 #high-score-display {
   top: 20px;
   right: 20px;
-}
-
-#coins-display {
-    top: 50px;
-    left: 20px;
 }
 
 #level-message {
@@ -211,17 +206,12 @@ button:disabled {
     font-size: 1.8rem;
   }
   
-  #score-display, #high-score-display, #coins-display {
+  #score-display, #high-score-display {
     font-size: 1rem;
     top: 10px;
   }
   
   #score-display {
-    left: 10px;
-  }
-
-  #coins-display {
-    top: 35px;
     left: 10px;
   }
   
@@ -259,7 +249,6 @@ button:disabled {
 
 <canvas id="game-canvas"></canvas>
 <div id="score-display">Score: 0</div>
-<div id="coins-display">Coins: 0</div>
 <div id="high-score-display"></div>
 <div id="level-message"></div>
 <div id="message-box"></div>
@@ -296,7 +285,6 @@ button:disabled {
   const ctx = canvas.getContext('2d');
   const scoreDisplay = document.getElementById('score-display');
   const highScoreDisplay = document.getElementById('high-score-display');
-  const coinsDisplay = document.getElementById('coins-display');
   const levelMessage = document.getElementById('level-message');
   const messageBox = document.getElementById('message-box');
   const toggleSoundBtn = document.getElementById('toggle-sound');
@@ -305,6 +293,7 @@ button:disabled {
   const hitSound = new Audio();
   const powerupSound = new Audio();
   const skinList = document.getElementById('skin-list');
+  const body = document.body;
 
   let width, height;
   let gameActive = false;
@@ -312,7 +301,6 @@ button:disabled {
   let adPlaying = false;
   let score = 0;
   let highScore = 0;
-  let totalCoins = 0;
   let currentLevel = 1;
   let obstacles = [];
   let powerups = [];
@@ -324,11 +312,56 @@ button:disabled {
   let powerupTimer = 0;
 
   const skins = [
-    { name: 'Classic', colors: ['#ff6b6b', '#4ecdc4'], unlocked: true, price: 0 },
-    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 1000 },
-    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 1500 },
-    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 2000 },
-    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 2500 }
+    { 
+        name: 'Classic', 
+        unlocked: true, 
+        price: 0,
+        theme: {
+            playerColors: ['#ff6b6b', '#4ecdc4'],
+            obstacleColors: ['#ff6b6b', '#e17055', '#d63031'],
+            backgroundGradient: ['#667eea', '#764ba2']
+        }
+    },
+    { 
+        name: 'Ocean', 
+        unlocked: false, 
+        price: 0.99,
+        theme: {
+            playerColors: ['#74b9ff', '#0984e3'],
+            obstacleColors: ['#00cec9', '#00b894', '#55efc4'],
+            backgroundGradient: ['#00c6ff', '#0072ff']
+        }
+    },
+    { 
+        name: 'Sunset', 
+        unlocked: false, 
+        price: 2.99,
+        theme: {
+            playerColors: ['#fd79a8', '#fdcb6e'],
+            obstacleColors: ['#ff7675', '#d63031', '#e17055'],
+            backgroundGradient: ['#ff9a9e', '#fad0c4']
+        }
+    },
+    { 
+        name: 'Cyber', 
+        unlocked: false, 
+        price: 7.99,
+        theme: {
+            playerColors: ['#f8f8f8', '#e0e0e0'],
+            obstacleColors: ['#f9ca24', '#f0932b', '#ffbe76'],
+            backgroundGradient: ['#141E30', '#243B55']
+        }
+    },
+    { 
+        name: 'Galaxy', 
+        unlocked: false, 
+        price: 15.00,
+        theme: {
+            playerColors: ['#a29bfe', '#6c5ce7', '#fd79a8'],
+            obstacleColors: ['#a29bfe', '#6c5ce7', '#81ecec'],
+            backgroundGradient: ['#232526', '#414345']
+        }
+    }
   ];
 
   let selectedSkin = skins[0];
@@ -336,7 +369,6 @@ button:disabled {
   function saveGameData() {
     const data = {
       highScore: highScore,
-      totalCoins: totalCoins,
       unlockedSkins: skins.filter(s => s.unlocked).map(s => s.name),
       selectedSkinName: selectedSkin.name
     };
@@ -353,7 +385,6 @@ button:disabled {
       if (savedDataJSON) {
         const data = JSON.parse(savedDataJSON);
         highScore = data.highScore || 0;
-        totalCoins = data.totalCoins || 0;
         
         if (data.unlockedSkins) {
           skins.forEach(skin => {
@@ -373,8 +404,17 @@ button:disabled {
     } catch (e) {
       console.error('Could not load game data from localStorage.', e);
     }
+    // Apply the loaded theme
+    applyTheme();
   }
 
+  function applyTheme() {
+    body.style.background = `linear-gradient(135deg, ${selectedSkin.theme.backgroundGradient[0]} 0%, ${selectedSkin.theme.backgroundGradient[1]} 100%)`;
+    if(player) {
+      player.colors = selectedSkin.theme.playerColors;
+    }
+  }
+  
   function createPlayer() {
     player = {
       x: width/2,
@@ -384,72 +424,17 @@ button:disabled {
       acceleration: 1.1,
       maxSpeed: 10 + currentLevel * 0.3,
       friction: 0.85,
-      colors: selectedSkin.colors,
+      colors: selectedSkin.theme.playerColors,
       shield: false,
       shieldAlpha: 0,
       movingLeft: false,
       movingRight: false
     };
   }
-
+  
   function drawBackground() {
-    const time = Date.now() * 0.002;
-    
-    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, '#667eea');
-    gradient.addColorStop(0.3, '#764ba2');
-    gradient.addColorStop(0.7, '#5f27cd');
-    gradient.addColorStop(1, '#341f97');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-
-    for (let i = 0; i < 200; i++) {
-      const x = (Math.sin(time + i * 0.1) * 50 + width * (i % 7) / 7);
-      const y = (Math.cos(time * 0.5 + i * 0.2) * 30 + height * (i % 5) / 5);
-      const size = Math.sin(time + i * 0.3) * 2 + 3;
-      const alpha = Math.sin(time + i * 0.15) * 0.3 + 0.4;
-      
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = i % 3 === 0 ? '#ff6b6b' : i % 3 === 1 ? '#4ecdc4' : '#feca57';
-      ctx.beginPath();
-      ctx.arc(x, y, size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    for (let i = 0; i < 50; i++) {
-      const x = (Math.sin(time * 0.3 + i * 0.5) * 100 + width / 2);
-      const y = (Math.cos(time * 0.4 + i * 0.3) * 80 + height / 2);
-      const rotation = time + i * 0.1;
-      const size = Math.sin(time + i * 0.2) * 15 + 20;
-      
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rotation);
-      ctx.globalAlpha = 0.1;
-      
-      const starGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
-      starGradient.addColorStop(0, '#ffffff');
-      starGradient.addColorStop(1, 'transparent');
-      ctx.fillStyle = starGradient;
-      
-      ctx.beginPath();
-      for (let j = 0; j < 5; j++) {
-        const angle = (j * Math.PI * 2) / 5;
-        const x1 = Math.cos(angle) * size;
-        const y1 = Math.sin(angle) * size;
-        const x2 = Math.cos(angle + Math.PI / 5) * size * 0.5;
-        const y2 = Math.sin(angle + Math.PI / 5) * size * 0.5;
-        
-        if (j === 0) ctx.moveTo(x1, y1);
-        else ctx.lineTo(x1, y1);
-        ctx.lineTo(x2, y2);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
+      // Background is now handled by the body's CSS gradient set in applyTheme()
+      // This function can be used for drawing dynamic canvas elements if needed in the future
   }
 
   function drawPlayer() {
@@ -581,7 +566,7 @@ button:disabled {
   function spawnObstacle() {
     const types = ['circle', 'triangle', 'rect'];
     const type = types[Math.floor(Math.random() * types.length)];
-    const colors = ['#ff6b6b', '#e17055', '#d63031'];
+    const colors = selectedSkin.theme.obstacleColors;
     
     obstacles.push({
       x: Math.random() * (width - 50),
@@ -614,7 +599,6 @@ button:disabled {
   function checkCollisions() {
     if (!player) return;
 
-    // Check obstacle collision only if shield is not active
     if (!player.shield) {
         obstacles.forEach((obstacle) => {
           const dx = player.x - (obstacle.x + obstacle.width/2);
@@ -628,7 +612,7 @@ button:disabled {
             if (!continueAvailable) {
               continueAvailable = true;
               gameActive = false;
-              paused = true; // Pause game logic
+              paused = true;
               document.getElementById('continue-screen').style.display = 'flex';
             } else {
               endGame();
@@ -765,7 +749,6 @@ button:disabled {
   function updateDisplays() {
       scoreDisplay.textContent = `Score: ${score}`;
       highScoreDisplay.textContent = `High Score: ${highScore}`;
-      coinsDisplay.textContent = `Coins: ${totalCoins}`;
   }
 
   function gameLoop() {
@@ -818,7 +801,6 @@ button:disabled {
   function endGame() {
     gameActive = false;
     paused = true;
-    totalCoins += score;
     if (score > highScore) {
       highScore = score;
     }
@@ -833,38 +815,41 @@ button:disabled {
     skinList.innerHTML = '';
     skins.forEach(skin => {
       const btn = document.createElement('button');
-      if (skin.colors.length === 3) {
-        btn.style.background = `radial-gradient(circle at center, ${skin.colors.join(',')})`;
-      } else {
-        btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
-      }
       
-      const statusText = skin.unlocked ? '✔️ Owned' : `🪙 ${skin.price}`;
+      const btnGradient = `linear-gradient(135deg, ${skin.theme.playerColors[0]}, ${skin.theme.playerColors[1]})`;
+      btn.style.background = btnGradient;
+      
+      const priceText = skin.price === 0 ? 'Free' : `$${skin.price.toFixed(2)}`;
+      const statusText = skin.unlocked ? '✔️ Equipped' : priceText;
       btn.innerHTML = `${skin.name}<br><span class="price-tag">${statusText}</span>`;
       
       btn.onclick = () => {
         if(skin.unlocked) {
             selectedSkin = skin;
             saveGameData();
-            showMessage(`Selected ${skin.name}`);
-            document.getElementById('skin-store').style.display = 'none';
-            document.getElementById('start-screen').style.display = 'flex';
+            applyTheme();
+            showMessage(`Equipped ${skin.name}`);
+            renderSkinStore(); // Re-render to show "Equipped" status
         } else {
-            if (totalCoins >= skin.price) {
-                if (confirm(`Buy ${skin.name} for ${skin.price} coins?`)) {
-                    totalCoins -= skin.price;
-                    skin.unlocked = true;
-                    selectedSkin = skin;
-                    saveGameData();
-                    updateDisplays();
-                    renderSkinStore(); // Re-render the store to update the button
-                    showMessage(`Purchased ${skin.name}`);
-                }
-            } else {
-                showMessage(`Not enough coins! You need ${skin.price}.`);
+            // SIMULATE a real money purchase
+            if (confirm(`Do you want to buy the "${skin.name}" theme for $${skin.price.toFixed(2)}?`)) {
+                skin.unlocked = true;
+                selectedSkin = skin;
+                saveGameData();
+                applyTheme();
+                renderSkinStore();
+                showMessage(`Purchased ${skin.name}`);
             }
         }
       };
+
+      if(skin.unlocked && skin.name === selectedSkin.name){
+        btn.style.borderColor = '#4CAF50';
+        btn.innerHTML = `${skin.name}<br><span class="price-tag">✔️ Equipped</span>`;
+      } else {
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+      }
+
       skinList.appendChild(btn);
     });
   }
@@ -944,7 +929,6 @@ button:disabled {
     document.getElementById('watch-ad-btn').disabled = true;
     document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
 
-    // This is still a placeholder. A real ad SDK would have its own callbacks.
     let secondsLeft = 3;
     const interval = setInterval(() => {
       document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
@@ -952,16 +936,15 @@ button:disabled {
         clearInterval(interval);
         document.getElementById('continue-screen').style.display = 'none';
         
-        // Reset player state to continue
-        createPlayer(); // Recreate the player
-        player.shield = true; // Give a temporary shield after ad
+        createPlayer();
+        player.shield = true;
         powerupActive = 'shield';
-        powerupTimer = 150; // 2.5 seconds shield
+        powerupTimer = 150;
         
         gameActive = true;
         paused = false;
         adPlaying = false;
-        continueAvailable = true; // Prevent another ad offer right away
+        continueAvailable = true;
         
         document.getElementById('watch-ad-btn').disabled = false;
         document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
@@ -994,6 +977,7 @@ button:disabled {
   // Initial setup
   loadGameData();
   resize();
+  createPlayer();
   updateDisplays();
   gameLoop();
 
