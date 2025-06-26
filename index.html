@@ -682,6 +682,7 @@ button:disabled {
   const missionScreen = document.getElementById('mission-screen'); 
   const tutorialOverlay = document.getElementById('tutorial-overlay');
 
+  let animationFrameId; // To store the ID of the requestAnimationFrame
   let width, height;
   let gameActive = false;
   let paused = false;
@@ -1180,6 +1181,22 @@ button:disabled {
     });
   }
 
+  function createParticles(x, y, color, count) {
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1;
+        particles.push({
+            x: x,
+            y: y,
+            size: Math.random() * 5 + 2,
+            color: color,
+            velocityX: Math.cos(angle) * speed,
+            velocityY: Math.sin(angle) * speed,
+            alpha: 1
+        });
+    }
+  }
+
   function checkCollisions() {
     if (!player) return;
 
@@ -1409,20 +1426,25 @@ button:disabled {
     scoreDisplay.textContent = `Score: ${score}`;
   }
 
-  function update() {
+  let lastFrameTime = 0;
+  function update(currentTime) {
     if (!gameActive || paused || adPlaying) {
-        if (paused) {
-            ctx.clearRect(0, 0, width, height);
-            drawBackground();
-            drawPlayer();
-            drawObstacles();
-            drawPowerups();
-            drawParticles();
-        }
-        requestAnimationFrame(update);
-        return;
+      // If paused or game not active, just draw the current state without updating game logic.
+      // And then request the next frame.
+      ctx.clearRect(0, 0, width, height);
+      drawBackground();
+      drawPlayer();
+      drawObstacles();
+      drawPowerups();
+      drawParticles();
+      animationFrameId = requestAnimationFrame(update);
+      return;
     }
 
+    // Only update game logic if game is active and not paused/ad playing
+    updateGame();
+    
+    // Clear and redraw for the next frame
     ctx.clearRect(0, 0, width, height);
     drawBackground();
     drawPlayer();
@@ -1430,9 +1452,7 @@ button:disabled {
     drawPowerups();
     drawParticles();
     
-    updateGame();
-    
-    requestAnimationFrame(update);
+    animationFrameId = requestAnimationFrame(update);
   }
 
   function startGame() {
@@ -1469,7 +1489,10 @@ button:disabled {
     
     updateHighScoreDisplays();
     updateCurrencyDisplay(); 
-    requestAnimationFrame(update);
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId); // Cancel any existing loop
+    }
+    animationFrameId = requestAnimationFrame(update); // Start new loop
   }
 
   function endGame() {
@@ -1489,6 +1512,10 @@ button:disabled {
     
     completeMission('score', score);
     completeMission('coinsEarned', coinsEarned); 
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId); // Stop the animation loop
+    }
   }
 
   function renderSkinStore() {
@@ -1977,7 +2004,10 @@ button:disabled {
         document.getElementById('watch-ad-btn').disabled = false;
         document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
         if (soundOn) bgMusic.play().catch(() => {});
-        requestAnimationFrame(update);
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        animationFrameId = requestAnimationFrame(update);
       }
     }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER));
   };
@@ -1998,9 +2028,15 @@ button:disabled {
     togglePauseBtn.textContent = paused ? '▶️' : '⏸️';
     if (!paused) {
       if (soundOn) bgMusic.play().catch(() => {});
-      requestAnimationFrame(update); 
+      if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId); // Cancel existing loop before starting a new one
+      }
+      animationFrameId = requestAnimationFrame(update); 
     } else {
       bgMusic.pause();
+      if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId); // Stop the loop when paused
+      }
     }
   };
 
@@ -2013,7 +2049,8 @@ button:disabled {
   checkDailyReward();
   resetMissionsDaily();
   showTutorial(); 
-  requestAnimationFrame(update);
+  // Initially, the game is not active, so we don't start the update loop automatically.
+  // The update loop will be started by startGame() or when an ad finishes.
 
 })();
 </script>
