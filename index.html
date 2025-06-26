@@ -547,7 +547,7 @@ button:disabled {
 <button id="toggle-sound" title="Toggle Sound">🔊</button>
 <button id="toggle-pause" title="Pause/Resume">⏸️</button>
 
-<audio id="bg-music" src="assets/audio/background_music.mp3" loop preload="auto"></audio>
+<audio id="bg-music" src="chillwave-daydreaming-of-you-332319.mp3" loop preload="auto"></audio>
 <audio id="hit-sound" src="assets/audio/hit_sound.mp3" preload="auto"></audio>
 <audio id="powerup-sound" src="assets/audio/powerup_sound.mp3" preload="auto"></audio>
 <audio id="coin-sound" src="assets/audio/coin_sound.mp3" preload="auto"></audio>
@@ -903,7 +903,7 @@ button:disabled {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 100; i++) {
       const x = (Math.sin(time + i * 0.1) * 50 + width * (i % 7) / 7);
       const y = (Math.cos(time * 0.5 + i * 0.2) * 30 + height * (i % 5) / 5);
       const size = Math.sin(time + i * 0.3) * 2 + 3;
@@ -918,7 +918,7 @@ button:disabled {
       ctx.restore();
     }
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 25; i++) {
       const x = (Math.sin(time * 0.3 + i * 0.5) * 100 + width / 2);
       const y = (Math.cos(time * 0.4 + i * 0.3) * 80 + height / 2);
       const rotation = time + i * 0.1;
@@ -1208,7 +1208,7 @@ button:disabled {
       const distance = Math.sqrt(dx * dx + dy * dy);
       
       if (distance < player.radius + obstacle.width / 2) {
-        createParticles(player.x, player.y, '#ff6b6b', 15);
+        createParticles(player.x, player.y, '#ff6b6b', 10);
         if (soundOn) hitSound.play().catch(() => {});
         
         player.invincible = true;
@@ -1234,7 +1234,7 @@ button:disabled {
       const distance = Math.sqrt(dx * dx + dy * dy);
       
       if (distance < player.radius + powerup.size / 2) {
-        createParticles(powerup.x, powerup.y, powerup.color, 8);
+        createParticles(powerup.x, powerup.y, powerup.color, 5);
         if (soundOn) powerupSound.play().catch(() => {});
         
         activatePowerup(powerup.type);
@@ -1809,9 +1809,17 @@ button:disabled {
           
           let progressText = '';
           if (mission.id === 'score' || mission.id === 'coinsEarned') {
-              progressText = ` (${mission.currentProgress}/${mission.target})`;
+              if (mission.currentProgress > mission.target) { // Cap progress display at target
+                  progressText = ` (${mission.target}/${mission.target})`;
+              } else {
+                  progressText = ` (${mission.currentProgress}/${mission.target})`;
+              }
           } else if (mission.id === 'powerupsCollected' || mission.id === 'runsPlayed') {
-              progressText = ` (${mission.currentProgress}/${mission.target})`;
+              if (mission.currentProgress > mission.target) { // Cap progress display at target
+                  progressText = ` (${mission.target}/${mission.target})`;
+              } else {
+                  progressText = ` (${mission.currentProgress}/${mission.target})`;
+              }
           }
 
           li.innerHTML = `
@@ -1974,71 +1982,12 @@ button:disabled {
 
   document.getElementById('tutorial-close-btn').onclick = () => {
       tutorialOverlay.style.display = 'none';
-      document.getElementById('start-screen').style.display = 'flex';
-  };
-
-  document.getElementById('no-thanks-btn').onclick = () => {
-    document.getElementById('continue-screen').style.display = 'none';
-    endGame();
-  };
-
-  document.getElementById('watch-ad-btn').onclick = () => {
-    if (adPlaying) return;
-    adPlaying = true;
-    document.getElementById('watch-ad-btn').disabled = true;
-    document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
-
-    let secondsLeft = 5;
-    const interval = setInterval(() => {
-      document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
-      if (secondsLeft < 0) {
-        clearInterval(interval);
-        document.getElementById('continue-screen').style.display = 'none';
-        
-        createPlayer(); 
-        player.invincible = true; 
-        player.invincibleTimer = 120 * (1 / GLOBAL_SPEED_MULTIPLIER);
-        gameActive = true;
-        paused = false;
-        adPlaying = false;
-        document.getElementById('watch-ad-btn').disabled = false;
-        document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
-        if (soundOn) bgMusic.play().catch(() => {});
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-        animationFrameId = requestAnimationFrame(update);
+      // Ensure game starts if it's the first time playing after tutorial
+      if (!gameActive && !paused) {
+          startGame();
       }
-    }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER));
   };
 
-  toggleSoundBtn.onclick = () => {
-    soundOn = !soundOn;
-    toggleSoundBtn.textContent = soundOn ? '🔊' : '🔇';
-    if (soundOn) {
-      if (gameActive) bgMusic.play().catch(() => {});
-    } else {
-      bgMusic.pause();
-    }
-  };
-
-  togglePauseBtn.onclick = () => {
-    if (!gameActive && !paused) return; 
-    paused = !paused;
-    togglePauseBtn.textContent = paused ? '▶️' : '⏸️';
-    if (!paused) {
-      if (soundOn) bgMusic.play().catch(() => {});
-      if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId); // Cancel existing loop before starting a new one
-      }
-      animationFrameId = requestAnimationFrame(update); 
-    } else {
-      bgMusic.pause();
-      if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId); // Stop the loop when paused
-      }
-    }
-  };
 
   // Initial load and setup
   loadGameData();
@@ -2049,9 +1998,8 @@ button:disabled {
   checkDailyReward();
   resetMissionsDaily();
   showTutorial(); 
-  // Initially, the game is not active, so we don't start the update loop automatically.
-  // The update loop will be started by startGame() or when an ad finishes.
-
+  // Initially, the game is not active, so don't start the animation loop immediately.
+  // It will be started by the play-btn click.
 })();
 </script>
 </body>
