@@ -27,7 +27,7 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-#score-display, #high-score-display {
+#score-display, #high-score-display, #currency-display {
   position: absolute;
   font-size: 1.5rem;
   font-weight: 700;
@@ -44,6 +44,11 @@ body {
 #high-score-display {
   top: 20px;
   right: 20px;
+}
+
+#currency-display { /* New style for currency display */
+  top: 60px; /* Adjusted position below score */
+  left: 20px;
 }
 
 #level-message {
@@ -75,6 +80,22 @@ body {
   transition: opacity 0.3s ease;
 }
 
+.score-popup { /* New style for score popups */
+  position: absolute;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #feca57;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  opacity: 0;
+  animation: fadeUp 1s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-50px); }
+}
+
 #toggle-sound, #toggle-pause {
   position: absolute;
   top: 70px;
@@ -93,7 +114,7 @@ body {
   right: 70px;
 }
 
-#start-screen, #game-over-screen, #continue-screen, #skin-store {
+#start-screen, #game-over-screen, #continue-screen, #skin-store, #how-to-play-screen { /* Added #how-to-play-screen */
   position: absolute;
   top: 0;
   left: 0;
@@ -155,18 +176,27 @@ button:disabled {
   transform: none;
 }
 
-#skin-store {
+#skin-store, #how-to-play-screen { /* Added #how-to-play-screen */
   padding: 10px;
   overflow-y: auto;
 }
 
-#skin-store h2 {
+#skin-store h2, #how-to-play-screen h2 { /* Added #how-to-play-screen */
   font-size: 1.8rem;
   margin-bottom: 15px;
   background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+#how-to-play-screen p { /* New style for instructions */
+  font-size: 0.85rem; /* Reduced font size for mobile */
+  max-width: 90%; /* Increased max-width for better use of space */
+  text-align: center;
+  margin-bottom: 8px; /* Reduced margin */
+  line-height: 1.4; /* Adjusted line height */
+  opacity: 0.9;
 }
 
 #skin-list {
@@ -196,7 +226,7 @@ button:disabled {
   margin-top: 2px;
 }
 
-#close-skin-store-btn {
+#close-skin-store-btn, #close-how-to-play-btn { /* Added #close-how-to-play-btn */
   padding: 8px 16px;
   font-size: 1rem;
 }
@@ -206,7 +236,7 @@ button:disabled {
     font-size: 1.8rem;
   }
   
-  #score-display, #high-score-display {
+  #score-display, #high-score-display, #currency-display { /* Added #currency-display */
     font-size: 1rem;
     top: 10px;
   }
@@ -217,6 +247,11 @@ button:disabled {
   
   #high-score-display {
     right: 10px;
+  }
+
+  #currency-display { /* Adjusted for mobile */
+    top: 40px;
+    left: 10px;
   }
   
   #level-message {
@@ -241,6 +276,11 @@ button:disabled {
   #game-canvas {
     border-radius: 10px;
   }
+
+  #how-to-play-screen p { /* Ensure mobile-specific adjustment for text */
+    font-size: 0.75rem; /* Even smaller for very small screens */
+    margin-bottom: 5px;
+  }
 }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700&display=swap" rel="stylesheet" />
@@ -250,21 +290,25 @@ button:disabled {
 <canvas id="game-canvas"></canvas>
 <div id="score-display">Score: 0</div>
 <div id="high-score-display"></div>
-<div id="level-message"></div>
+<div id="currency-display">Coins: 0</div> <div id="level-message"></div>
 <div id="message-box"></div>
 <button id="toggle-sound" title="Toggle Sound">🔊</button>
 <button id="toggle-pause" title="Pause/Resume">⏸️</button>
+
+<audio id="bg-music" src="assets/audio/background_music.mp3" loop preload="auto"></audio>
+<audio id="hit-sound" src="assets/audio/hit_sound.mp3" preload="auto"></audio>
+<audio id="powerup-sound" src="assets/audio/powerup_sound.mp3" preload="auto"></audio>
 
 <div id="start-screen">
   <div>Welcome to Puff Run - Dream Edition</div>
   <button id="play-btn">Start Game</button>
   <button id="store-btn">🎨 Skins</button>
-  <div style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Use Arrow keys, A/D, or touch screen to move</div>
+  <button id="how-to-play-btn">❓ How to Play</button> <div style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Use Arrow keys, A/D, or touch screen to move</div>
 </div>
 
 <div id="game-over-screen" style="display:none;">
   <div id="score-display-final"></div>
-  <button id="retry-btn">Play Again</button>
+  <div id="coins-earned-display"></div> <button id="retry-btn">Play Again</button>
 </div>
 
 <div id="continue-screen" style="display:none;">
@@ -279,21 +323,37 @@ button:disabled {
   <button id="close-skin-store-btn">Close</button>
 </div>
 
+<div id="how-to-play-screen" style="display:none;">
+  <h2>How to Play Puff Run</h2>
+  <p>Guide your dreamy sphere through a vibrant, ever-changing world. Avoid obstacles and collect power-ups to achieve the highest score!</p>
+  <p><strong>Controls:</strong></p>
+  <p>- Use <strong>Left/Right Arrow keys</strong> or <strong>A/D keys</strong> on keyboard.</p>
+  <p>- On touch devices, tap the <strong>left or right half of the screen</strong> to move.</p>
+  <p><strong>Power-ups:</strong></p>
+  <p>- 🛡️ <strong>Shield:</strong> Become temporarily invincible to obstacles.</p>
+  <p>- ⏳ <strong>Slow:</strong> Slow down time, making obstacles easier to dodge.</p>
+  <p>- ✨ <strong>Points:</strong> Instantly gain bonus points!</p>
+  <p>- 💰 <strong>Multiplier:</strong> Doubles your score gain for a short period!</p>
+  <p>- 🧲 <strong>Magnet:</strong> Attracts power-ups towards you!</p>
+  <button id="close-how-to-play-btn">Got It!</button>
+</div>
+
 <script>
 (() => {
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
   const scoreDisplay = document.getElementById('score-display');
   const highScoreDisplay = document.getElementById('high-score-display');
+  const currencyDisplay = document.getElementById('currency-display'); // New element
   const levelMessage = document.getElementById('level-message');
   const messageBox = document.getElementById('message-box');
   const toggleSoundBtn = document.getElementById('toggle-sound');
   const togglePauseBtn = document.getElementById('toggle-pause');
-  const bgMusic = new Audio();
-  const hitSound = new Audio();
-  const powerupSound = new Audio();
+  const bgMusic = document.getElementById('bg-music'); // Linked to HTML audio
+  const hitSound = document.getElementById('hit-sound'); // Linked to HTML audio
+  const powerupSound = document.getElementById('powerup-sound'); // Linked to HTML audio
   const skinList = document.getElementById('skin-list');
-  const body = document.body;
+  const howToPlayScreen = document.getElementById('how-to-play-screen'); // New element
 
   let width, height;
   let gameActive = false;
@@ -301,6 +361,7 @@ button:disabled {
   let adPlaying = false;
   let score = 0;
   let highScore = 0;
+  let coins = 0; // New currency variable
   let currentLevel = 1;
   let obstacles = [];
   let powerups = [];
@@ -310,131 +371,151 @@ button:disabled {
   let continueAvailable = false;
   let powerupActive = null;
   let powerupTimer = 0;
+  let scoreMultiplier = 1; // For multiplier power-up
+  let invincibleTimer = 0; // New for player invincibility
+
+  // --- GLOBAL SPEED ADJUSTMENT ---
+  const GLOBAL_SPEED_MULTIPLIER = 0.8; // Decreased to 0.8 (was 1.0 previously) for overall slower game
+  // ---------------------------------
 
   const skins = [
-    { 
-        name: 'Classic', 
-        unlocked: true, 
-        price: 0,
-        theme: {
-            playerColors: ['#ff6b6b', '#4ecdc4'],
-            obstacleColors: ['#ff6b6b', '#e17055', '#d63031'],
-            backgroundGradient: ['#667eea', '#764ba2']
-        }
-    },
-    { 
-        name: 'Ocean', 
-        unlocked: false, 
-        price: 0.99,
-        theme: {
-            playerColors: ['#74b9ff', '#0984e3'],
-            obstacleColors: ['#00cec9', '#00b894', '#55efc4'],
-            backgroundGradient: ['#00c6ff', '#0072ff']
-        }
-    },
-    { 
-        name: 'Sunset', 
-        unlocked: false, 
-        price: 2.99,
-        theme: {
-            playerColors: ['#fd79a8', '#fdcb6e'],
-            obstacleColors: ['#ff7675', '#d63031', '#e17055'],
-            backgroundGradient: ['#ff9a9e', '#fad0c4']
-        }
-    },
-    { 
-        name: 'Cyber', 
-        unlocked: false, 
-        price: 7.99,
-        theme: {
-            playerColors: ['#f8f8f8', '#e0e0e0'],
-            obstacleColors: ['#f9ca24', '#f0932b', '#ffbe76'],
-            backgroundGradient: ['#141E30', '#243B55']
-        }
-    },
-    { 
-        name: 'Galaxy', 
-        unlocked: false, 
-        price: 15.00,
-        theme: {
-            playerColors: ['#a29bfe', '#6c5ce7', '#fd79a8'],
-            obstacleColors: ['#a29bfe', '#6c5ce7', '#81ecec'],
-            backgroundGradient: ['#232526', '#414345']
-        }
-    }
+    { name: 'Classic', colors: ['#ff6b6b', '#4ecdc4'], unlocked: true, price: 0 },
+    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 50 }, // Adjusted prices for coins
+    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 100 },
+    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 150 },
+    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 250 }
   ];
 
   let selectedSkin = skins[0];
 
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+  }
+
   function saveGameData() {
     const data = {
       highScore: highScore,
-      unlockedSkins: skins.filter(s => s.unlocked).map(s => s.name),
-      selectedSkinName: selectedSkin.name
+      coins: coins, // Save coins
+      skins: skins.map(s => ({ name: s.name, unlocked: s.unlocked })), // Only save unlock status
+      selectedSkinName: selectedSkin.name // Save selected skin name
     };
     try {
-      localStorage.setItem('puffRunSaveData', JSON.stringify(data));
+      localStorage.setItem('puffRunGameData', JSON.stringify(data));
     } catch (e) {
-      console.error('Could not save game data to localStorage.', e);
+      console.error('Failed to save game data to local storage:', e);
     }
   }
 
   function loadGameData() {
     try {
-      const savedDataJSON = localStorage.getItem('puffRunSaveData');
-      if (savedDataJSON) {
-        const data = JSON.parse(savedDataJSON);
+      const storedData = localStorage.getItem('puffRunGameData');
+      if (storedData) {
+        const data = JSON.parse(storedData);
         highScore = data.highScore || 0;
+        coins = data.coins || 0; // Load coins
         
-        if (data.unlockedSkins) {
-          skins.forEach(skin => {
-            if (data.unlockedSkins.includes(skin.name)) {
-              skin.unlocked = true;
+        if (data.skins) {
+          data.skins.forEach(loadedSkin => {
+            const existingSkin = skins.find(s => s.name === loadedSkin.name);
+            if (existingSkin) {
+              existingSkin.unlocked = loadedSkin.unlocked;
             }
           });
         }
-        
         if (data.selectedSkinName) {
           const found = skins.find(s => s.name === data.selectedSkinName);
           if (found && found.unlocked) {
             selectedSkin = found;
+          } else {
+            selectedSkin = skins[0]; // Fallback to classic if selected is not found or locked
           }
         }
       }
     } catch (e) {
-      console.error('Could not load game data from localStorage.', e);
+      console.error('Failed to load game data from local storage:', e);
     }
-    // Apply the loaded theme
-    applyTheme();
   }
 
-  function applyTheme() {
-    body.style.background = `linear-gradient(135deg, ${selectedSkin.theme.backgroundGradient[0]} 0%, ${selectedSkin.theme.backgroundGradient[1]} 100%)`;
-    if(player) {
-      player.colors = selectedSkin.theme.playerColors;
-    }
-  }
-  
   function createPlayer() {
     player = {
-      x: width/2,
+      x: width / 2,
       y: height - 75,
       radius: 26,
       velocityX: 0,
-      acceleration: 1.1,
-      maxSpeed: 10 + currentLevel * 0.3,
-      friction: 0.85,
-      colors: selectedSkin.theme.playerColors,
+      acceleration: 0.7 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+      maxSpeed: (5 + currentLevel * 0.07) * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+      friction: 0.85, 
+      colors: selectedSkin.colors,
       shield: false,
       shieldAlpha: 0,
       movingLeft: false,
-      movingRight: false
+      movingRight: false,
+      invincible: false, 
+      invincibleTimer: 0 
     };
   }
-  
+
   function drawBackground() {
-      // Background is now handled by the body's CSS gradient set in applyTheme()
-      // This function can be used for drawing dynamic canvas elements if needed in the future
+    const time = Date.now() * 0.002;
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(0.3, '#764ba2');
+    gradient.addColorStop(0.7, '#5f27cd');
+    gradient.addColorStop(1, '#341f97');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    for (let i = 0; i < 200; i++) {
+      const x = (Math.sin(time + i * 0.1) * 50 + width * (i % 7) / 7);
+      const y = (Math.cos(time * 0.5 + i * 0.2) * 30 + height * (i % 5) / 5);
+      const size = Math.sin(time + i * 0.3) * 2 + 3;
+      const alpha = Math.sin(time + i * 0.15) * 0.3 + 0.4;
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = i % 3 === 0 ? '#ff6b6b' : i % 3 === 1 ? '#4ecdc4' : '#feca57';
+      ctx.beginPath();
+      ctx.arc(x, y, size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    for (let i = 0; i < 50; i++) {
+      const x = (Math.sin(time * 0.3 + i * 0.5) * 100 + width / 2);
+      const y = (Math.cos(time * 0.4 + i * 0.3) * 80 + height / 2);
+      const rotation = time + i * 0.1;
+      const size = Math.sin(time + i * 0.2) * 15 + 20;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      ctx.globalAlpha = 0.1;
+      
+      const starGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+      starGradient.addColorStop(0, '#ffffff');
+      starGradient.addColorStop(1, 'transparent');
+      ctx.fillStyle = starGradient;
+      
+      ctx.beginPath();
+      for (let j = 0; j < 5; j++) {
+        const angle = (j * Math.PI * 2) / 5;
+        const x1 = Math.cos(angle) * size;
+        const y1 = Math.sin(angle) * size;
+        const x2 = Math.cos(angle + Math.PI / 5) * size * 0.5;
+        const y2 = Math.sin(angle + Math.PI / 5) * size * 0.5;
+        
+        if (j === 0) ctx.moveTo(x1, y1);
+        else ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   function drawPlayer() {
@@ -452,7 +533,12 @@ button:disabled {
       ctx.stroke();
     }
 
-    ctx.globalAlpha = 1;
+    // Apply flashing effect if invincible
+    if (player.invincible) {
+        ctx.globalAlpha = (Math.sin(player.invincibleTimer * 0.5) * 0.5) + 0.5; // Flashing effect
+    } else {
+        ctx.globalAlpha = 1;
+    }
     
     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, player.radius);
     if (player.colors.length === 3) {
@@ -475,6 +561,20 @@ button:disabled {
     ctx.fill();
 
     ctx.restore();
+
+    // Player squash and stretch effect
+    if (Math.abs(player.velocityX) > 0.5) { 
+        const stretchFactor = 1 + Math.min(0.2, Math.abs(player.velocityX) / player.maxSpeed * 0.5);
+        const squashFactor = 1 - Math.min(0.2, Math.abs(player.velocityX) / player.maxSpeed * 0.5);
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.scale(stretchFactor, squashFactor);
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
   }
 
   function drawObstacles() {
@@ -499,7 +599,20 @@ button:disabled {
         ctx.lineTo(obstacle.width/2, obstacle.height/2);
         ctx.closePath();
         ctx.fill();
-      } else {
+      } else if (obstacle.type === 'star') { 
+        const outerRadius = obstacle.width / 2;
+        const innerRadius = outerRadius * 0.4;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const outerAngle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+          const innerAngle = outerAngle + Math.PI / 5;
+          if (i === 0) ctx.moveTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+          else ctx.lineTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+          ctx.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else { 
         ctx.beginPath();
         ctx.roundRect(-obstacle.width/2, -obstacle.height/2, obstacle.width, obstacle.height, 8);
         ctx.fill();
@@ -522,6 +635,19 @@ button:disabled {
       
       ctx.fillStyle = powerup.color;
       ctx.fillRect(-powerup.size/2, -powerup.size/2, powerup.size, powerup.size);
+
+      // Draw powerup icon
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.font = `${powerup.size * 0.7}px Arial`; 
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      let icon = '';
+      if (powerup.type === 'shield') icon = '🛡️';
+      else if (powerup.type === 'slow') icon = '⏳';
+      else if (powerup.type === 'points') icon = '✨';
+      else if (powerup.type === 'multiplier') icon = '💰'; 
+      else if (powerup.type === 'magnet') icon = '🧲'; 
+      ctx.fillText(icon, 0, 0);
       
       ctx.restore();
       powerup.rotation += 0.1;
@@ -554,8 +680,8 @@ button:disabled {
       particles.push({
         x: x,
         y: y,
-        velocityX: (Math.random() - 0.5) * 10,
-        velocityY: (Math.random() - 0.5) * 10,
+        velocityX: (Math.random() - 0.5) * 10 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+        velocityY: (Math.random() - 0.5) * 10 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
         alpha: 1,
         size: Math.random() * 8 + 2,
         color: color
@@ -563,33 +689,53 @@ button:disabled {
     }
   }
 
+  function createScorePopup(x, y, value) {
+    const popup = document.createElement('div');
+    popup.textContent = `+${value}`;
+    popup.className = 'score-popup';
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+      popup.remove();
+    }, 1000);
+  }
+
   function spawnObstacle() {
-    const types = ['circle', 'triangle', 'rect'];
+    const types = ['circle', 'triangle', 'rect', 'star']; 
     const type = types[Math.floor(Math.random() * types.length)];
-    const colors = selectedSkin.theme.obstacleColors;
+    const colors = ['#ff6b6b', '#e17055', '#d63031'];
     
+    // Varying speeds and sizes
+    const speedVariation = 0.7 + Math.random() * 0.6; 
+    const sizeVariation = 0.8 + Math.random() * 0.4; 
+    const obstacleWidth = (30 + Math.random() * 20) * sizeVariation;
+    const obstacleHeight = (30 + Math.random() * 20) * sizeVariation;
+
     obstacles.push({
-      x: Math.random() * (width - 50),
-      y: -40,
-      width: 30 + Math.random() * 20,
-      height: 30 + Math.random() * 20,
-      speed: 3 + currentLevel * 0.5,
+      x: Math.random() * (width - obstacleWidth),
+      y: -obstacleHeight,
+      width: obstacleWidth,
+      height: obstacleHeight,
+      speed: (1.2 + currentLevel * 0.15) * speedVariation * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
       type: type,
       color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: 0
+      rotation: 0,
+      velocityX: Math.random() < 0.2 ? (Math.random() - 0.5) * (0.4 + currentLevel * 0.04) * GLOBAL_SPEED_MULTIPLIER : 0 // Adjusted by global multiplier
     });
   }
 
   function spawnPowerup() {
-    const types = ['shield', 'slow', 'points'];
+    const types = ['shield', 'slow', 'points', 'multiplier', 'magnet']; 
     const type = types[Math.floor(Math.random() * types.length)];
-    const colors = { shield: '#4ecdc4', slow: '#45b7d1', points: '#f39c12' };
+    const colors = { shield: '#4ecdc4', slow: '#45b7d1', points: '#f39c12', multiplier: '#8e44ad', magnet: '#c0392b' }; 
     
     powerups.push({
       x: Math.random() * (width - 40),
       y: -30,
       size: 25,
-      speed: 2 + currentLevel * 0.3,
+      speed: (0.9 + currentLevel * 0.12) * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
       type: type,
       color: colors[type],
       rotation: 0
@@ -599,34 +745,40 @@ button:disabled {
   function checkCollisions() {
     if (!player) return;
 
-    if (!player.shield) {
-        obstacles.forEach((obstacle) => {
-          const dx = player.x - (obstacle.x + obstacle.width/2);
-          const dy = player.y - (obstacle.y + obstacle.height/2);
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          
-          if (distance < player.radius + obstacle.width/2) {
-            createParticles(player.x, player.y, '#ff6b6b', 15);
-            if (soundOn) hitSound.play().catch(() => {});
-            
-            if (!continueAvailable) {
-              continueAvailable = true;
-              gameActive = false;
-              paused = true;
-              document.getElementById('continue-screen').style.display = 'flex';
-            } else {
-              endGame();
-            }
+    obstacles.forEach((obstacle, index) => {
+      if (player.invincible) return; 
+
+      const dx = player.x - (obstacle.x + obstacle.width / 2);
+      const dy = player.y - (obstacle.y + obstacle.height / 2);
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < player.radius + obstacle.width / 2) {
+        createParticles(player.x, player.y, '#ff6b6b', 15);
+        if (soundOn) hitSound.play().catch(() => {});
+        
+        // Start invincibility frames
+        player.invincible = true;
+        player.invincibleTimer = 60 * (1 / GLOBAL_SPEED_MULTIPLIER); // Invincibility duration scales with game speed
+        
+        // Delay the continue screen
+        setTimeout(() => {
+          if (!continueAvailable) {
+            continueAvailable = true;
+            gameActive = false;
+            document.getElementById('continue-screen').style.display = 'flex';
+          } else {
+            endGame();
           }
-        });
-    }
+        }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Wait for invincibility to wear off before showing screen
+      }
+    });
 
     powerups.forEach((powerup, index) => {
-      const dx = player.x - (powerup.x + powerup.size/2);
-      const dy = player.y - (powerup.y + powerup.size/2);
-      const distance = Math.sqrt(dx*dx + dy*dy);
+      const dx = player.x - (powerup.x + powerup.size / 2);
+      const dy = player.y - (powerup.y + powerup.size / 2);
+      const distance = Math.sqrt(dx * dx + dy * dy);
       
-      if (distance < player.radius + powerup.size/2) {
+      if (distance < player.radius + powerup.size / 2) {
         createParticles(powerup.x, powerup.y, powerup.color, 8);
         if (soundOn) powerupSound.play().catch(() => {});
         
@@ -638,7 +790,7 @@ button:disabled {
 
   function activatePowerup(type) {
     powerupActive = type;
-    powerupTimer = 300;
+    powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER); // Powerup duration scales with game speed
     
     switch (type) {
       case 'shield':
@@ -647,13 +799,24 @@ button:disabled {
         showMessage('Shield Active!');
         break;
       case 'slow':
-        obstacles.forEach(obs => obs.speed *= 0.5);
+        // Note: Slow powerup effect itself is not scaled by GLOBAL_SPEED_MULTIPLIER
+        // because it's a *temporary* speed change to existing obstacles.
+        // It's already defined as a multiplication (0.5), so applying GLOBAL_SPEED_MULTIPLIER here again
+        // would make it too slow.
+        obstacles.forEach(obs => obs.speed *= 0.5); 
         showMessage('Time Slowed!');
         break;
       case 'points':
         score += 50;
-        updateDisplays();
+        createScorePopup(player.x, player.y - player.radius - 20, 50); 
         showMessage('+50 Points!');
+        break;
+      case 'multiplier': 
+        scoreMultiplier = 2;
+        showMessage('2x Score Multiplier!');
+        break;
+      case 'magnet': 
+        showMessage('Magnet Active!');
         break;
     }
   }
@@ -666,12 +829,28 @@ button:disabled {
         player.shieldAlpha = Math.sin(powerupTimer * 0.2) * 0.3 + 0.5;
       }
       
+      if (powerupActive === 'magnet') { 
+        powerups.forEach(p => {
+          const dx = player.x - (p.x + p.size/2);
+          const dy = player.y - (p.y + p.size/2);
+          const angle = Math.atan2(dy, dx);
+          const distance = Math.sqrt(dx*dx + dy*dy);
+          if (distance > 20) { 
+            // Magnet pull speed also scales with GLOBAL_SPEED_MULTIPLIER
+            p.x += Math.cos(angle) * Math.min(5, distance / 10) * GLOBAL_SPEED_MULTIPLIER; 
+            p.y += Math.sin(angle) * Math.min(5, distance / 10) * GLOBAL_SPEED_MULTIPLIER; 
+          }
+        });
+      }
+
       if (powerupTimer === 0) {
         if (powerupActive === 'shield') {
           player.shield = false;
           player.shieldAlpha = 0;
         } else if (powerupActive === 'slow') {
           obstacles.forEach(obs => obs.speed *= 2);
+        } else if (powerupActive === 'multiplier') {
+          scoreMultiplier = 1;
         }
         powerupActive = null;
       }
@@ -683,7 +862,7 @@ button:disabled {
     messageBox.style.opacity = '1';
     setTimeout(() => {
       messageBox.style.opacity = '0';
-    }, 2000);
+    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Message duration scales
   }
 
   function showLevelMessage(level) {
@@ -691,11 +870,19 @@ button:disabled {
     levelMessage.style.opacity = '1';
     setTimeout(() => {
       levelMessage.style.opacity = '0';
-    }, 2000);
+    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Message duration scales
   }
 
   function updateGame() {
     if (!player) return;
+
+    // Update player invincibility timer
+    if (player.invincibleTimer > 0) {
+        player.invincibleTimer--;
+        if (player.invincibleTimer === 0) {
+            player.invincible = false;
+        }
+    }
 
     if (player.movingLeft) {
       player.velocityX -= player.acceleration;
@@ -712,9 +899,16 @@ button:disabled {
 
     obstacles.forEach((obstacle, index) => {
       obstacle.y += obstacle.speed;
+      obstacle.x += obstacle.velocityX; 
+      
+      // Keep horizontal obstacles within bounds
+      if (obstacle.x < 0 || obstacle.x + obstacle.width > width) {
+        obstacle.velocityX *= -1; 
+      }
+
       if (obstacle.y > height) {
         obstacles.splice(index, 1);
-        score += 10;
+        score += (10 * scoreMultiplier); 
       }
     });
 
@@ -725,11 +919,12 @@ button:disabled {
       }
     });
 
-    if (Math.random() < 0.015 + currentLevel * 0.002) {
+    // Spawn rates are adjusted to be less frequent for a slower game
+    if (Math.random() < (0.009 + currentLevel * 0.0009) * GLOBAL_SPEED_MULTIPLIER) {
       spawnObstacle();
     }
 
-    if (Math.random() < 0.005) {
+    if (Math.random() < (0.0028) * GLOBAL_SPEED_MULTIPLIER) { 
       spawnPowerup();
     }
 
@@ -737,38 +932,41 @@ button:disabled {
     if (newLevel > currentLevel) {
       currentLevel = newLevel;
       showLevelMessage(currentLevel);
-      player.maxSpeed = 10 + currentLevel * 0.3;
+      // Player max speed updates with level AND global multiplier
+      player.maxSpeed = (5 + currentLevel * 0.07) * GLOBAL_SPEED_MULTIPLIER; 
     }
 
     updatePowerups();
     checkCollisions();
     
-    updateDisplays();
-  }
-  
-  function updateDisplays() {
-      scoreDisplay.textContent = `Score: ${score}`;
-      highScoreDisplay.textContent = `High Score: ${highScore}`;
+    scoreDisplay.textContent = `Score: ${score}`;
   }
 
-  function gameLoop() {
-    if (!gameActive || adPlaying) {
-        requestAnimationFrame(gameLoop);
+  function update() {
+    if (!gameActive || paused || adPlaying) {
+        // Continue drawing if paused to show paused screen content
+        if (paused) {
+            ctx.clearRect(0, 0, width, height);
+            drawBackground();
+            drawPlayer();
+            drawObstacles();
+            drawPowerups();
+            drawParticles();
+        }
+        requestAnimationFrame(update);
         return;
     }
+
+    ctx.clearRect(0, 0, width, height);
+    drawBackground();
+    drawPlayer();
+    drawObstacles();
+    drawPowerups();
+    drawParticles();
     
-    if(!paused) {
-        ctx.clearRect(0, 0, width, height);
-        drawBackground();
-        drawPlayer();
-        drawObstacles();
-        drawPowerups();
-        drawParticles();
-        
-        updateGame();
-    }
+    updateGame();
     
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(update);
   }
 
   function startGame() {
@@ -784,88 +982,92 @@ button:disabled {
     adPlaying = false;
     powerupActive = null;
     powerupTimer = 0;
+    scoreMultiplier = 1; 
+    player.invincible = false; 
+    player.invincibleTimer = 0; 
 
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('continue-screen').style.display = 'none';
+    document.getElementById('how-to-play-screen').style.display = 'none'; 
     
     if (soundOn) {
-      bgMusic.loop = true;
       bgMusic.volume = 0.4;
       bgMusic.play().catch(() => {});
     }
     
-    updateDisplays();
+    updateHighScoreDisplays();
+    updateCurrencyDisplay(); 
+    requestAnimationFrame(update);
   }
 
   function endGame() {
     gameActive = false;
-    paused = true;
+    const coinsEarned = Math.floor(score / 50); 
+    coins += coinsEarned; 
     if (score > highScore) {
       highScore = score;
     }
-    document.getElementById('score-display-final').textContent = `Final Score: ${score}`;
+    document.getElementById('score-display-final').textContent = `Score: ${score}`;
+    document.getElementById('coins-earned-display').textContent = `Coins Earned: ${coinsEarned}`; 
     document.getElementById('game-over-screen').style.display = 'flex';
     bgMusic.pause();
-    saveGameData();
-    updateDisplays();
+    saveGameData(); 
+    updateHighScoreDisplays();
+    updateCurrencyDisplay(); 
   }
 
   function renderSkinStore() {
     skinList.innerHTML = '';
     skins.forEach(skin => {
       const btn = document.createElement('button');
-      
-      const btnGradient = `linear-gradient(135deg, ${skin.theme.playerColors[0]}, ${skin.theme.playerColors[1]})`;
-      btn.style.background = btnGradient;
-      
-      const priceText = skin.price === 0 ? 'Free' : `$${skin.price.toFixed(2)}`;
-      const statusText = skin.unlocked ? '✔️ Equipped' : priceText;
-      btn.innerHTML = `${skin.name}<br><span class="price-tag">${statusText}</span>`;
-      
-      btn.onclick = () => {
-        if(skin.unlocked) {
-            selectedSkin = skin;
-            saveGameData();
-            applyTheme();
-            showMessage(`Equipped ${skin.name}`);
-            renderSkinStore(); // Re-render to show "Equipped" status
-        } else {
-            // SIMULATE a real money purchase
-            if (confirm(`Do you want to buy the "${skin.name}" theme for $${skin.price.toFixed(2)}?`)) {
-                skin.unlocked = true;
-                selectedSkin = skin;
-                saveGameData();
-                applyTheme();
-                renderSkinStore();
-                showMessage(`Purchased ${skin.name}`);
-            }
-        }
-      };
-
-      if(skin.unlocked && skin.name === selectedSkin.name){
-        btn.style.borderColor = '#4CAF50';
-        btn.innerHTML = `${skin.name}<br><span class="price-tag">✔️ Equipped</span>`;
+      if (skin.colors.length === 3) {
+        btn.style.background = `radial-gradient(circle at center, ${skin.colors.join(',')})`;
       } else {
-        btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        btn.style.background = `linear-gradient(135deg, ${skin.colors[0]}, ${skin.colors[1]})`;
       }
-
+      btn.innerHTML = `${skin.name}<br><span class="price-tag">${skin.unlocked ? '✔️ Owned' : `${skin.price} Coins`}</span>`;
+      
+      if (!skin.unlocked && skin.price > 0) {
+        btn.disabled = coins < skin.price; 
+        btn.onclick = () => {
+          if (confirm(`Buy ${skin.name} for ${skin.price} Coins?`)) {
+            if (coins >= skin.price) {
+              coins -= skin.price;
+              skin.unlocked = true;
+              selectedSkin = skin;
+              saveGameData();
+              renderSkinStore();
+              updateCurrencyDisplay();
+              showMessage(`Purchased ${skin.name}!`);
+            } else {
+              showMessage('Not enough coins!');
+            }
+          }
+        };
+      } else {
+        btn.onclick = () => {
+          selectedSkin = skin;
+          saveGameData();
+          document.getElementById('skin-store').style.display = 'none';
+          document.getElementById('start-screen').style.display = 'flex';
+          showMessage(`Selected ${skin.name} skin.`);
+        };
+      }
       skinList.appendChild(btn);
     });
   }
 
-  function resize() {
-    width = window.innerWidth;
-    height = window.innerHeight;
-    canvas.width = width;
-    canvas.height = height;
-    if (player) {
-      player.y = height - 75;
-      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
+  function updateHighScoreDisplays() {
+    highScoreDisplay.textContent = `High Score: ${highScore}`;
+    if (document.getElementById('score-display-final')) {
+      document.getElementById('score-display-final').textContent = `Score: ${score}`;
     }
   }
 
-  window.addEventListener('resize', resize);
+  function updateCurrencyDisplay() { 
+    currencyDisplay.textContent = `Coins: ${coins}`;
+  }
 
   window.addEventListener('keydown', e => {
     if (!player || !gameActive || paused || adPlaying) return;
@@ -891,18 +1093,26 @@ button:disabled {
     } else {
       player.movingRight = true;
     }
-  }, { passive: false });
+  });
 
   canvas.addEventListener('touchend', e => {
     if (!player) return;
     e.preventDefault();
     player.movingLeft = false;
     player.movingRight = false;
-  }, { passive: false });
-  
+  });
+
   canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-  }, { passive: false });
+  });
+
+  window.addEventListener('resize', () => {
+    resize();
+    if (player) {
+      player.y = height - player.radius - 50;
+      player.x = Math.max(player.radius, Math.min(player.x, width - player.radius));
+    }
+  });
 
   document.getElementById('play-btn').onclick = startGame;
   document.getElementById('retry-btn').onclick = startGame;
@@ -918,6 +1128,17 @@ button:disabled {
     document.getElementById('start-screen').style.display = 'flex';
   };
 
+  // New How to Play screen buttons
+  document.getElementById('how-to-play-btn').onclick = () => {
+    document.getElementById('start-screen').style.display = 'none';
+    howToPlayScreen.style.display = 'flex';
+  };
+
+  document.getElementById('close-how-to-play-btn').onclick = () => {
+    howToPlayScreen.style.display = 'none';
+    document.getElementById('start-screen').style.display = 'flex';
+  };
+
   document.getElementById('no-thanks-btn').onclick = () => {
     document.getElementById('continue-screen').style.display = 'none';
     endGame();
@@ -929,57 +1150,57 @@ button:disabled {
     document.getElementById('watch-ad-btn').disabled = true;
     document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
 
-    let secondsLeft = 3;
+    // Simulate ad watching for 5 seconds
+    let secondsLeft = 5;
     const interval = setInterval(() => {
       document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
       if (secondsLeft < 0) {
         clearInterval(interval);
         document.getElementById('continue-screen').style.display = 'none';
         
-        createPlayer();
-        player.shield = true;
-        powerupActive = 'shield';
-        powerupTimer = 150;
-        
+        // Resume game state after "ad"
+        createPlayer(); 
+        player.invincible = true; 
+        player.invincibleTimer = 120 * (1 / GLOBAL_SPEED_MULTIPLIER); // Invincibility duration scales
         gameActive = true;
         paused = false;
         adPlaying = false;
-        continueAvailable = true;
-        
         document.getElementById('watch-ad-btn').disabled = false;
         document.getElementById('watch-ad-btn').textContent = 'Watch Ad';
         if (soundOn) bgMusic.play().catch(() => {});
+        requestAnimationFrame(update);
       }
-    }, 1000);
+    }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Ad duration scales
   };
 
   toggleSoundBtn.onclick = () => {
     soundOn = !soundOn;
     toggleSoundBtn.textContent = soundOn ? '🔊' : '🔇';
     if (soundOn) {
-      if (gameActive && !paused) bgMusic.play().catch(() => {});
+      if (gameActive) bgMusic.play().catch(() => {});
     } else {
       bgMusic.pause();
     }
   };
 
   togglePauseBtn.onclick = () => {
-    if (!gameActive) return;
+    if (!gameActive && !paused) return; 
     paused = !paused;
     togglePauseBtn.textContent = paused ? '▶️' : '⏸️';
     if (!paused) {
       if (soundOn) bgMusic.play().catch(() => {});
+      requestAnimationFrame(update); 
     } else {
       bgMusic.pause();
     }
   };
-  
-  // Initial setup
+
   loadGameData();
   resize();
   createPlayer();
-  updateDisplays();
-  gameLoop();
+  updateHighScoreDisplays();
+  updateCurrencyDisplay();
+  requestAnimationFrame(update);
 
 })();
 </script>
