@@ -1,3 +1,23 @@
+You're right\! Having a huge list of items in the store can be a pain on mobile. I've restructured the **Store** to be more **mobile-friendly** by implementing a **tabbed navigation** system. This way, instead of one long scroll, users can easily **switch between sections** like Skins, Coin Packs, and Upgrades.
+
+Here's how I've adjusted the Store:
+
+-----
+
+## Mobile-Friendly Store Redesign
+
+  * **Tabbed Navigation:** The store now features clear buttons at the top ("Skins," "Coin Packs," "Upgrades," "Pre-Game Boosts"). Tapping these will **display only the relevant section**, significantly reducing the vertical scroll.
+  * **Optimized Grids:** Each section (Skins, Coin Packs, Upgrades, Pre-Game Boosts) uses a **responsive grid layout**. On smaller mobile screens, these grids will default to **two columns**, ensuring that items are larger and easier to tap without being too cramped. On larger screens, they'll expand to three columns.
+  * **Adjusted Item Sizes:** Individual item buttons (for skins, coin packs, and upgrades) have been slightly adjusted in size to be more touch-friendly and visually appealing on mobile devices.
+  * **Consistent Button Styling:** All navigation and action buttons within the store maintain a consistent, mobile-optimized style.
+
+-----
+
+I've made the necessary changes in the code to implement this tabbed interface and adjust the styling accordingly. The core game logic remains unchanged.
+
+-----
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,6 +36,11 @@ body {
   font-family: 'Rubik', sans-serif;
   overflow: hidden;
   color: white;
+  -webkit-user-select: none; /* Disable text selection for touch devices */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
 }
 
 #game-canvas {
@@ -46,8 +71,8 @@ body {
   right: 20px;
 }
 
-#currency-display { /* New style for currency display */
-  top: 60px; /* Adjusted position below score */
+#currency-display {
+  top: 60px;
   left: 20px;
 }
 
@@ -80,7 +105,7 @@ body {
   transition: opacity 0.3s ease;
 }
 
-.score-popup { /* New style for score popups */
+.score-popup {
   position: absolute;
   font-size: 1.2rem;
   font-weight: 700;
@@ -114,7 +139,8 @@ body {
   right: 70px;
 }
 
-#start-screen, #game-over-screen, #continue-screen, #skin-store, #how-to-play-screen { /* Added #how-to-play-screen */
+#start-screen, #game-over-screen, #continue-screen, #store-screen,
+#how-to-play-screen, #daily-reward-screen, #mission-screen, #pre-game-powerup-store, #tutorial-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -127,6 +153,7 @@ body {
   background: rgba(0, 0, 0, 0.8);
   z-index: 1000;
   backdrop-filter: blur(20px);
+  text-align: center;
 }
 
 #start-screen div:first-child {
@@ -159,6 +186,7 @@ button {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  -webkit-tap-highlight-color: transparent; /* For Safari on iOS */
 }
 
 button:hover {
@@ -176,12 +204,13 @@ button:disabled {
   transform: none;
 }
 
-#skin-store, #how-to-play-screen { /* Added #how-to-play-screen */
+#store-screen, #how-to-play-screen, #daily-reward-screen, #mission-screen, #pre-game-powerup-store {
   padding: 10px;
-  overflow-y: auto;
+  overflow-y: auto; /* Allow vertical scrolling if content is too long */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
-#skin-store h2, #how-to-play-screen h2 { /* Added #how-to-play-screen */
+#store-screen h2, #how-to-play-screen h2, #daily-reward-screen h2, #mission-screen h2, #pre-game-powerup-store h2 {
   font-size: 1.8rem;
   margin-bottom: 15px;
   background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
@@ -190,24 +219,71 @@ button:disabled {
   background-clip: text;
 }
 
-#how-to-play-screen p { /* New style for instructions */
-  font-size: 0.85rem; /* Reduced font size for mobile */
-  max-width: 90%; /* Increased max-width for better use of space */
+#how-to-play-screen p {
+  font-size: 0.85rem;
+  max-width: 90%;
   text-align: center;
-  margin-bottom: 8px; /* Reduced margin */
-  line-height: 1.4; /* Adjusted line height */
+  margin-bottom: 8px;
+  line-height: 1.4;
   opacity: 0.9;
 }
 
-#skin-list {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  max-width: 320px;
-  margin: 0 auto 15px auto;
+/* Store Tab Buttons */
+#store-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  width: 90%;
+  max-width: 400px;
+  justify-content: space-around;
+  flex-wrap: wrap;
 }
 
-#skin-list button {
+#store-tabs button {
+  flex-grow: 1;
+  margin: 5px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+#store-tabs button.active {
+  background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Store Sections */
+.store-section {
+  display: none; /* Hidden by default */
+  width: 100%;
+  max-width: 350px;
+  padding-bottom: 20px; /* Add padding for scrollable content */
+}
+
+.store-section.active {
+  display: block; /* Show active section */
+}
+
+.store-section h3 {
+    margin-top: 20px;
+    margin-bottom: 15px;
+    background: linear-gradient(45deg, #feca57, #ff9f43);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 1.3rem;
+}
+
+
+#skin-list, #coin-pack-list, #upgrade-list, #pre-game-powerup-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Default to 3 columns for wider screens */
+  gap: 10px;
+  margin: 0 auto;
+}
+
+.skin-button, .coin-pack-button, .upgrade-button, .pre-game-powerup-button {
   width: 90px;
   height: 70px;
   display: flex;
@@ -218,25 +294,133 @@ button:disabled {
   border: 2px solid rgba(255, 255, 255, 0.3);
   font-size: 0.8rem;
   padding: 5px;
+  background: linear-gradient(45deg, #feca57, #ff9f43);
+  border-radius: 10px;
 }
 
-.price-tag {
+.skin-button .price-tag, .coin-pack-button .price-tag, .upgrade-button .price-tag, .pre-game-powerup-button .price-tag {
   font-size: 0.7rem;
-  opacity: 0.8;
+  opacity: 0.9;
   margin-top: 2px;
+  font-weight: bold;
 }
 
-#close-skin-store-btn, #close-how-to-play-btn { /* Added #close-how-to-play-btn */
+#close-store-btn, #close-how-to-play-btn, #claim-daily-reward-btn,
+#close-missions-btn, #close-pre-game-powerup-store-btn, #tutorial-close-btn {
   padding: 8px 16px;
   font-size: 1rem;
+  margin-top: 20px; /* Space from content above */
 }
 
+/* Daily Reward Specific Styles */
+#daily-reward-track {
+  display: flex; /* Use flex for horizontal layout */
+  justify-content: flex-start; /* Align items to the start */
+  align-items: center;
+  margin-bottom: 20px;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  white-space: nowrap; /* Prevent items from wrapping */
+  width: 100%; /* Take full width */
+  padding: 10px 0; /* Add some padding for scroll indicators */
+  scroll-snap-type: x mandatory; /* Optional: for snapping effect */
+}
+
+#daily-reward-screen .daily-reward-item {
+  flex: 0 0 auto; /* Prevent items from shrinking */
+  display: inline-block; /* For horizontal flow */
+  padding: 10px;
+  margin: 0 5px; /* Adjust margin for spacing */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  width: 90px; /* Fixed width for consistency */
+  min-width: 90px;
+  text-align: center;
+  scroll-snap-align: center; /* Snap to center when scrolling */
+}
+#daily-reward-screen .daily-reward-item.claimed {
+  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Mission Specific Styles */
+#mission-list {
+  list-style: none;
+  padding: 0;
+  max-width: 350px;
+  width: 90%; /* Ensure it adapts to screen width */
+  margin: 20px auto;
+}
+#mission-list li {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column; /* Stack content vertically on small screens */
+  justify-content: space-between;
+  align-items: flex-start; /* Align text to start */
+  font-size: 0.9rem; /* Smaller font for missions */
+}
+#mission-list li.completed {
+  background: rgba(78, 205, 196, 0.2);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+#mission-list li span {
+  flex-grow: 1;
+  text-align: left;
+  margin-bottom: 5px; /* Space between description and button */
+}
+#mission-list li button {
+  margin-left: 0; /* Remove left margin */
+  padding: 5px 10px;
+  font-size: 0.8rem; /* Smaller button for missions */
+  width: 100%; /* Full width button */
+}
+
+/* Tutorial Overlay */
+#tutorial-overlay {
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000; /* Super high z-index */
+}
+#tutorial-overlay .tutorial-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 80%;
+    margin: 20px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+}
+#tutorial-overlay h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+#tutorial-overlay p {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+#tutorial-overlay .tutorial-controls {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #feca57;
+    margin-top: 20px;
+}
+
+/* --- MOBILE SPECIFIC STYLES --- */
 @media (max-width: 768px) {
   #start-screen div:first-child {
     font-size: 1.8rem;
+    margin-bottom: 15px;
   }
   
-  #score-display, #high-score-display, #currency-display { /* Added #currency-display */
+  #score-display, #high-score-display, #currency-display {
     font-size: 1rem;
     top: 10px;
   }
@@ -249,7 +433,7 @@ button:disabled {
     right: 10px;
   }
 
-  #currency-display { /* Adjusted for mobile */
+  #currency-display {
     top: 40px;
     left: 10px;
   }
@@ -261,11 +445,14 @@ button:disabled {
   button {
     padding: 10px 20px;
     font-size: 0.9rem;
+    margin: 8px;
   }
   
   #toggle-sound, #toggle-pause {
     top: 50px;
     right: 10px;
+    width: 35px;
+    height: 35px;
     font-size: 1rem;
   }
   
@@ -277,9 +464,93 @@ button:disabled {
     border-radius: 10px;
   }
 
-  #how-to-play-screen p { /* Ensure mobile-specific adjustment for text */
-    font-size: 0.75rem; /* Even smaller for very small screens */
-    margin-bottom: 5px;
+  #store-screen h2, #how-to-play-screen h2, #daily-reward-screen h2, #mission-screen h2, #pre-game-powerup-store h2 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  #how-to-play-screen p {
+    font-size: 0.75rem;
+    max-width: 95%;
+  }
+
+  /* Store Tabs Mobile */
+  #store-tabs {
+    flex-direction: row; /* Keep row for small screens, allow wrapping */
+    justify-content: center;
+    width: 95%;
+    max-width: none;
+  }
+  #store-tabs button {
+    flex-basis: 45%; /* Two buttons per row approx */
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    margin: 4px;
+  }
+
+  /* Store Sections Mobile */
+  .store-section h3 {
+    font-size: 1.1rem;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+
+  #skin-list, #coin-pack-list, #upgrade-list, #pre-game-powerup-list {
+    grid-template-columns: repeat(2, 1fr); /* Adjust grid to 2 columns for smaller screens */
+    max-width: 250px; /* Constrain max width for grid containers */
+    gap: 8px; /* Slightly smaller gap */
+  }
+  .skin-button, .coin-pack-button, .upgrade-button, .pre-game-powerup-button {
+    width: 100px; /* Adjust button width to fit 2 columns */
+    height: 60px;
+    font-size: 0.7rem;
+    padding: 3px;
+  }
+  .skin-button .price-tag, .coin-pack-button .price-tag, .upgrade-button .price-tag, .pre-game-powerup-button .price-tag {
+    font-size: 0.6rem;
+  }
+
+  #close-store-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+
+  /* Daily Reward Specific Mobile Adjustments */
+  #daily-reward-screen .daily-reward-item {
+    width: 80px; /* Slightly smaller width for items */
+    min-width: 80px;
+    font-size: 0.7rem;
+    padding: 8px;
+  }
+
+  /* Mission Specific Mobile Adjustments */
+  #mission-list li {
+    font-size: 0.8rem;
+    padding: 8px 12px;
+  }
+  #mission-list li button {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  /* Tutorial Overlay Mobile Adjustments */
+  #tutorial-overlay .tutorial-content {
+    padding: 20px;
+    max-width: 90%;
+    margin: 10px;
+  }
+  #tutorial-overlay h2 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+  #tutorial-overlay p {
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+  }
+  #tutorial-overlay .tutorial-controls {
+    font-size: 0.8rem;
   }
 }
 </style>
@@ -290,7 +561,8 @@ button:disabled {
 <canvas id="game-canvas"></canvas>
 <div id="score-display">Score: 0</div>
 <div id="high-score-display"></div>
-<div id="currency-display">Coins: 0</div> <div id="level-message"></div>
+<div id="currency-display">Coins: 0</div>
+<div id="level-message"></div>
 <div id="message-box"></div>
 <button id="toggle-sound" title="Toggle Sound">🔊</button>
 <button id="toggle-pause" title="Pause/Resume">⏸️</button>
@@ -298,17 +570,23 @@ button:disabled {
 <audio id="bg-music" src="assets/audio/background_music.mp3" loop preload="auto"></audio>
 <audio id="hit-sound" src="assets/audio/hit_sound.mp3" preload="auto"></audio>
 <audio id="powerup-sound" src="assets/audio/powerup_sound.mp3" preload="auto"></audio>
+<audio id="coin-sound" src="assets/audio/coin_sound.mp3" preload="auto"></audio>
+<audio id="mission-complete-sound" src="assets/audio/mission_complete.mp3" preload="auto"></audio>
 
 <div id="start-screen">
   <div>Welcome to Puff Run - Dream Edition</div>
   <button id="play-btn">Start Game</button>
-  <button id="store-btn">🎨 Skins</button>
-  <button id="how-to-play-btn">❓ How to Play</button> <div style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Use Arrow keys, A/D, or touch screen to move</div>
+  <button id="store-btn">💰 Store</button> 
+  <button id="missions-btn">✅ Missions</button>
+  <button id="daily-reward-btn">🎁 Daily Reward</button>
+  <button id="how-to-play-btn">❓ How to Play</button>
+  <div style="font-size: 0.9rem; margin-top: 20px; opacity: 0.7;">Use Arrow keys, A/D, or touch screen to move</div>
 </div>
 
 <div id="game-over-screen" style="display:none;">
   <div id="score-display-final"></div>
-  <div id="coins-earned-display"></div> <button id="retry-btn">Play Again</button>
+  <div id="coins-earned-display"></div>
+  <button id="retry-btn">Play Again</button>
 </div>
 
 <div id="continue-screen" style="display:none;">
@@ -317,11 +595,39 @@ button:disabled {
   <button id="no-thanks-btn">No Thanks</button>
 </div>
 
-<div id="skin-store" style="display:none;">
-  <h2>Select Your Dreamy Skin</h2>
-  <div id="skin-list"></div>
-  <button id="close-skin-store-btn">Close</button>
+<div id="store-screen" style="display:none;">
+  <h2>Store</h2> 
+  <div id="store-tabs">
+    <button id="tab-skins" class="active">Skins</button>
+    <button id="tab-coin-packs">Coin Packs</button>
+    <button id="tab-upgrades">Upgrades</button>
+    <button id="tab-pre-game-boosts">Boosts</button>
+  </div>
+
+  <div id="skins-section" class="store-section active">
+    <h3>Skins</h3>
+    <div id="skin-list"></div>
+  </div>
+
+  <div id="coin-packs-section" class="store-section">
+    <h3>Coin Packs</h3> 
+    <div id="coin-pack-list"></div>
+  </div>
+
+  <div id="upgrades-section" class="store-section">
+    <h3>Upgrades</h3>
+    <div id="upgrade-list"></div>
+  </div>
+
+  <div id="pre-game-boosts-section" class="store-section">
+    <h3>Pre-Game Boosts</h3>
+    <p>Get a head start on your run!</p>
+    <div id="pre-game-powerup-list"></div>
+  </div>
+
+  <button id="close-store-btn">Close</button>
 </div>
+
 
 <div id="how-to-play-screen" style="display:none;">
   <h2>How to Play Puff Run</h2>
@@ -338,22 +644,63 @@ button:disabled {
   <button id="close-how-to-play-btn">Got It!</button>
 </div>
 
+<div id="daily-reward-screen" style="display:none;">
+    <h2>Daily Reward</h2>
+    <p id="daily-reward-status"></p>
+    <div id="daily-reward-track"></div>
+    <button id="claim-daily-reward-btn">Claim Reward</button>
+    <button id="close-daily-reward-btn">Close</button>
+</div>
+
+<div id="mission-screen" style="display:none;">
+    <h2>Daily Missions</h2>
+    <p>Complete missions to earn extra coins!</p>
+    <ul id="mission-list"></ul>
+    <button id="close-missions-btn">Close</button>
+</div>
+
+<div id="tutorial-overlay" style="display:none;">
+    <div class="tutorial-content">
+        <h2>Welcome to Puff Run!</h2>
+        <p>Your goal is simple: **DODGE** the obstacles!</p>
+        <p class="tutorial-controls">
+            **Move Left:** Tap left side of screen / Left Arrow or 'A' key<br>
+            **Move Right:** Tap right side of screen / Right Arrow or 'D' key
+        </p>
+        <p>Collect **power-ups** to help you on your journey!</p>
+        <button id="tutorial-close-btn">Got It! Let's Go!</button>
+    </div>
+</div>
+
 <script>
 (() => {
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
   const scoreDisplay = document.getElementById('score-display');
   const highScoreDisplay = document.getElementById('high-score-display');
-  const currencyDisplay = document.getElementById('currency-display'); // New element
+  const currencyDisplay = document.getElementById('currency-display');
   const levelMessage = document.getElementById('level-message');
   const messageBox = document.getElementById('message-box');
   const toggleSoundBtn = document.getElementById('toggle-sound');
   const togglePauseBtn = document.getElementById('toggle-pause');
-  const bgMusic = document.getElementById('bg-music'); // Linked to HTML audio
-  const hitSound = document.getElementById('hit-sound'); // Linked to HTML audio
-  const powerupSound = document.getElementById('powerup-sound'); // Linked to HTML audio
+  const bgMusic = document.getElementById('bg-music');
+  const hitSound = document.getElementById('hit-sound');
+  const powerupSound = document.getElementById('powerup-sound');
+  const coinSound = document.getElementById('coin-sound');
+  const missionCompleteSound = document.getElementById('mission-complete-sound');
+
+  // Store related elements
+  const storeScreen = document.getElementById('store-screen');
+  const storeTabs = document.getElementById('store-tabs');
   const skinList = document.getElementById('skin-list');
-  const howToPlayScreen = document.getElementById('how-to-play-screen'); // New element
+  const coinPackList = document.getElementById('coin-pack-list');
+  const upgradeList = document.getElementById('upgrade-list'); 
+  const preGamePowerupList = document.getElementById('pre-game-powerup-list');
+
+  const howToPlayScreen = document.getElementById('how-to-play-screen');
+  const dailyRewardScreen = document.getElementById('daily-reward-screen'); 
+  const missionScreen = document.getElementById('mission-screen'); 
+  const tutorialOverlay = document.getElementById('tutorial-overlay');
 
   let width, height;
   let gameActive = false;
@@ -361,7 +708,7 @@ button:disabled {
   let adPlaying = false;
   let score = 0;
   let highScore = 0;
-  let coins = 0; // New currency variable
+  let coins = 0;
   let currentLevel = 1;
   let obstacles = [];
   let powerups = [];
@@ -371,19 +718,63 @@ button:disabled {
   let continueAvailable = false;
   let powerupActive = null;
   let powerupTimer = 0;
-  let scoreMultiplier = 1; // For multiplier power-up
-  let invincibleTimer = 0; // New for player invincibility
+  let scoreMultiplier = 1;
+  let invincibleTimer = 0;
+
+  // Pre-game power-up related variables
+  let preGameShield = 0;
+  let preGameSlow = 0;
+  let preGameMultiplier = 0;
 
   // --- GLOBAL SPEED ADJUSTMENT ---
-  const GLOBAL_SPEED_MULTIPLIER = 0.8; // Decreased to 0.8 (was 1.0 previously) for overall slower game
+  const GLOBAL_SPEED_MULTIPLIER = 0.8;
   // ---------------------------------
 
   const skins = [
     { name: 'Classic', colors: ['#ff6b6b', '#4ecdc4'], unlocked: true, price: 0 },
-    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 50 }, // Adjusted prices for coins
-    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 100 },
-    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 150 },
-    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 250 }
+    { name: 'Ocean', colors: ['#74b9ff', '#0984e3'], unlocked: false, price: 1500 },
+    { name: 'Sunset', colors: ['#fd79a8', '#fdcb6e'], unlocked: false, price: 3000 },
+    { name: 'Forest', colors: ['#55a3ff', '#00b894'], unlocked: false, price: 5000 },
+    { name: 'Galaxy', colors: ['#a29bfe', '#6c5ce7', '#fd79a8'], unlocked: false, price: 8000 }
+  ];
+
+  const coinPacks = [
+    { name: 'Small Pack', coins: 100, price: '$0.99', id: 'coin_pack_small' },
+    { name: 'Medium Pack', coins: 500, price: '$3.99', id: 'coin_pack_medium' },
+    { name: 'Large Pack', coins: 1500, price: '$9.99', id: 'coin_pack_large' },
+    { name: 'Mega Pack', coins: 5000, price: '$24.99', id: 'coin_pack_mega' }
+  ];
+
+  // New Coin Sinks: Upgrades
+  const playerUpgrades = [
+    { name: 'Magnet Duration', description: '+2s Magnet Time', type: 'magnetDuration', levels: 3, currentLevel: 0, basePrice: 200, priceScale: 2 }
+  ];
+
+  // New Coin Sinks: Pre-Game Power-ups
+  const preGamePowerups = [
+      { name: 'Shield', type: 'shield', cost: 100, icon: '🛡️' },
+      { name: 'Slow', type: 'slow', cost: 150, icon: '⏳' },
+      { name: '2x Score', type: 'multiplier', cost: 200, icon: '💰' }
+  ];
+
+  // Daily Reward structure
+  const dailyRewardData = [
+      { day: 1, coins: 50 },
+      { day: 2, coins: 100 },
+      { day: 3, coins: 200 },
+      { day: 4, coins: 300 },
+      { day: 5, coins: 500 },
+      { day: 6, coins: 750 },
+      { day: 7, coins: 1000 }
+  ];
+
+  // Missions
+  let missions = []; // Will be loaded/generated
+  const missionTemplates = [
+      { id: 'score', text: 'Reach a score of {target} in one run', target: [500, 1000, 2000], current: 0, reward: [100, 200, 300] },
+      { id: 'powerupsCollected', text: 'Collect {target} power-ups in one run', target: [3, 5, 8], current: 0, reward: [75, 125, 200] },
+      { id: 'coinsEarned', text: 'Earn {target} coins in one run', target: [200, 400, 600], current: 0, reward: [150, 250, 350] },
+      { id: 'runsPlayed', text: 'Play {target} games', target: [2, 5, 10], current: 0, reward: [50, 100, 150] }
   ];
 
   let selectedSkin = skins[0];
@@ -398,9 +789,18 @@ button:disabled {
   function saveGameData() {
     const data = {
       highScore: highScore,
-      coins: coins, // Save coins
-      skins: skins.map(s => ({ name: s.name, unlocked: s.unlocked })), // Only save unlock status
-      selectedSkinName: selectedSkin.name // Save selected skin name
+      coins: coins,
+      skins: skins.map(s => ({ name: s.name, unlocked: s.unlocked })),
+      selectedSkinName: selectedSkin.name,
+      lastLoginDate: localStorage.getItem('lastLoginDate'),
+      dailyRewardDay: localStorage.getItem('dailyRewardDay') || 0,
+      dailyRewardClaimed: localStorage.getItem('dailyRewardClaimed') === 'true',
+      playerUpgrades: playerUpgrades.map(u => ({ name: u.name, currentLevel: u.currentLevel })),
+      missions: missions,
+      hasSeenTutorial: localStorage.getItem('hasSeenTutorial') === 'true',
+      preGameShield: preGameShield, // Save pre-game boosts
+      preGameSlow: preGameSlow,
+      preGameMultiplier: preGameMultiplier
     };
     try {
       localStorage.setItem('puffRunGameData', JSON.stringify(data));
@@ -415,7 +815,7 @@ button:disabled {
       if (storedData) {
         const data = JSON.parse(storedData);
         highScore = data.highScore || 0;
-        coins = data.coins || 0; // Load coins
+        coins = data.coins || 0;
         
         if (data.skins) {
           data.skins.forEach(loadedSkin => {
@@ -430,12 +830,42 @@ button:disabled {
           if (found && found.unlocked) {
             selectedSkin = found;
           } else {
-            selectedSkin = skins[0]; // Fallback to classic if selected is not found or locked
+            selectedSkin = skins[0];
           }
         }
+
+        localStorage.setItem('lastLoginDate', data.lastLoginDate || '');
+        localStorage.setItem('dailyRewardDay', data.dailyRewardDay || 0);
+        localStorage.setItem('dailyRewardClaimed', data.dailyRewardClaimed ? 'true' : 'false');
+        
+        if (data.playerUpgrades) {
+            data.playerUpgrades.forEach(loadedUpgrade => {
+                const existingUpgrade = playerUpgrades.find(u => u.name === loadedUpgrade.name);
+                if (existingUpgrade) {
+                    existingUpgrade.currentLevel = loadedUpgrade.currentLevel;
+                }
+            });
+        }
+
+        if (data.missions && data.missions.length > 0) {
+            missions = data.missions;
+        } else {
+            generateNewMissions();
+        }
+        
+        localStorage.setItem('hasSeenTutorial', data.hasSeenTutorial ? 'true' : 'false');
+
+        preGameShield = data.preGameShield || 0; // Load pre-game boosts
+        preGameSlow = data.preGameSlow || 0;
+        preGameMultiplier = data.preGameMultiplier || 0;
+
+      } else {
+          generateNewMissions();
       }
     } catch (e) {
       console.error('Failed to load game data from local storage:', e);
+      localStorage.removeItem('puffRunGameData');
+      generateNewMissions(); 
     }
   }
 
@@ -445,8 +875,8 @@ button:disabled {
       y: height - 75,
       radius: 26,
       velocityX: 0,
-      acceleration: 0.7 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
-      maxSpeed: (5 + currentLevel * 0.07) * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+      acceleration: 0.7 * GLOBAL_SPEED_MULTIPLIER,
+      maxSpeed: (5 + currentLevel * 0.07) * GLOBAL_SPEED_MULTIPLIER,
       friction: 0.85, 
       colors: selectedSkin.colors,
       shield: false,
@@ -456,6 +886,29 @@ button:disabled {
       invincible: false, 
       invincibleTimer: 0 
     };
+
+    // Apply pre-game power-ups
+    if (preGameShield > 0) {
+        activatePowerup('shield');
+        powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER); // 5 seconds
+        preGameShield--;
+        showMessage("Shield boost consumed!");
+        saveGameData();
+    }
+    if (preGameSlow > 0) {
+        activatePowerup('slow');
+        powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER); // 5 seconds
+        preGameSlow--;
+        showMessage("Slow boost consumed!");
+        saveGameData();
+    }
+    if (preGameMultiplier > 0) {
+        activatePowerup('multiplier');
+        powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER); // 5 seconds
+        preGameMultiplier--;
+        showMessage("Score boost consumed!");
+        saveGameData();
+    }
   }
 
   function drawBackground() {
@@ -533,9 +986,8 @@ button:disabled {
       ctx.stroke();
     }
 
-    // Apply flashing effect if invincible
     if (player.invincible) {
-        ctx.globalAlpha = (Math.sin(player.invincibleTimer * 0.5) * 0.5) + 0.5; // Flashing effect
+        ctx.globalAlpha = (Math.sin(player.invincibleTimer * 0.5) * 0.5) + 0.5;
     } else {
         ctx.globalAlpha = 1;
     }
@@ -562,7 +1014,6 @@ button:disabled {
 
     ctx.restore();
 
-    // Player squash and stretch effect
     if (Math.abs(player.velocityX) > 0.5) { 
         const stretchFactor = 1 + Math.min(0.2, Math.abs(player.velocityX) / player.maxSpeed * 0.5);
         const squashFactor = 1 - Math.min(0.2, Math.abs(player.velocityX) / player.maxSpeed * 0.5);
@@ -603,10 +1054,10 @@ button:disabled {
         const outerRadius = obstacle.width / 2;
         const innerRadius = outerRadius * 0.4;
         ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-          const outerAngle = (i * Math.PI * 2) / 5 - Math.PI / 2;
+        for (let j = 0; j < 5; j++) {
+          const outerAngle = (j * Math.PI * 2) / 5 - Math.PI / 2;
           const innerAngle = outerAngle + Math.PI / 5;
-          if (i === 0) ctx.moveTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
+          if (j === 0) ctx.moveTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
           else ctx.lineTo(Math.cos(outerAngle) * outerRadius, Math.sin(outerAngle) * outerRadius);
           ctx.lineTo(Math.cos(innerAngle) * innerRadius, Math.sin(innerAngle) * innerRadius);
         }
@@ -636,7 +1087,6 @@ button:disabled {
       ctx.fillStyle = powerup.color;
       ctx.fillRect(-powerup.size/2, -powerup.size/2, powerup.size, powerup.size);
 
-      // Draw powerup icon
       ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
       ctx.font = `${powerup.size * 0.7}px Arial`; 
       ctx.textAlign = 'center';
@@ -675,20 +1125,6 @@ button:disabled {
     });
   }
 
-  function createParticles(x, y, color, count = 10) {
-    for (let i = 0; i < count; i++) {
-      particles.push({
-        x: x,
-        y: y,
-        velocityX: (Math.random() - 0.5) * 10 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
-        velocityY: (Math.random() - 0.5) * 10 * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
-        alpha: 1,
-        size: Math.random() * 8 + 2,
-        color: color
-      });
-    }
-  }
-
   function createScorePopup(x, y, value) {
     const popup = document.createElement('div');
     popup.textContent = `+${value}`;
@@ -707,22 +1143,44 @@ button:disabled {
     const type = types[Math.floor(Math.random() * types.length)];
     const colors = ['#ff6b6b', '#e17055', '#d63031'];
     
-    // Varying speeds and sizes
     const speedVariation = 0.7 + Math.random() * 0.6; 
     const sizeVariation = 0.8 + Math.random() * 0.4; 
     const obstacleWidth = (30 + Math.random() * 20) * sizeVariation;
     const obstacleHeight = (30 + Math.random() * 20) * sizeVariation;
+
+    const obstacleSpeed = (1.2 + currentLevel * 0.15 + score / 2000) * speedVariation * GLOBAL_SPEED_MULTIPLIER;
+
+    let initialVelocityX = 0;
+    let oscillate = false;
+    let accelerateY = false;
+
+    if (currentLevel >= 3 || score >= 1000) {
+        if (Math.random() < 0.3) { 
+            oscillate = true;
+            initialVelocityX = (Math.random() - 0.5) * (1 + currentLevel * 0.05) * GLOBAL_SPEED_MULTIPLIER;
+        }
+    }
+    if (currentLevel >= 5 || score >= 2500) {
+        if (Math.random() < 0.2) {
+            accelerateY = true;
+        }
+    }
 
     obstacles.push({
       x: Math.random() * (width - obstacleWidth),
       y: -obstacleHeight,
       width: obstacleWidth,
       height: obstacleHeight,
-      speed: (1.2 + currentLevel * 0.15) * speedVariation * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+      speed: obstacleSpeed,
+      initialSpeed: obstacleSpeed,
       type: type,
       color: colors[Math.floor(Math.random() * colors.length)],
       rotation: 0,
-      velocityX: Math.random() < 0.2 ? (Math.random() - 0.5) * (0.4 + currentLevel * 0.04) * GLOBAL_SPEED_MULTIPLIER : 0 // Adjusted by global multiplier
+      velocityX: initialVelocityX,
+      oscillate: oscillate,
+      oscillatePhase: Math.random() * Math.PI * 2,
+      accelerateY: accelerateY,
+      accelerationY: (0.01 + currentLevel * 0.001) * GLOBAL_SPEED_MULTIPLIER
     });
   }
 
@@ -735,7 +1193,7 @@ button:disabled {
       x: Math.random() * (width - 40),
       y: -30,
       size: 25,
-      speed: (0.9 + currentLevel * 0.12) * GLOBAL_SPEED_MULTIPLIER, // Adjusted by global multiplier
+      speed: (0.9 + currentLevel * 0.12 + score / 3000) * GLOBAL_SPEED_MULTIPLIER,
       type: type,
       color: colors[type],
       rotation: 0
@@ -756,11 +1214,11 @@ button:disabled {
         createParticles(player.x, player.y, '#ff6b6b', 15);
         if (soundOn) hitSound.play().catch(() => {});
         
-        // Start invincibility frames
         player.invincible = true;
-        player.invincibleTimer = 60 * (1 / GLOBAL_SPEED_MULTIPLIER); // Invincibility duration scales with game speed
+        player.invincibleTimer = 60 * (1 / GLOBAL_SPEED_MULTIPLIER);
         
-        // Delay the continue screen
+        completeMission('hitObstacles'); 
+
         setTimeout(() => {
           if (!continueAvailable) {
             continueAvailable = true;
@@ -769,7 +1227,7 @@ button:disabled {
           } else {
             endGame();
           }
-        }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Wait for invincibility to wear off before showing screen
+        }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER));
       }
     });
 
@@ -784,13 +1242,28 @@ button:disabled {
         
         activatePowerup(powerup.type);
         powerups.splice(index, 1);
+        completeMission('powerupsCollected', 1);
       }
     });
   }
 
   function activatePowerup(type) {
+    if (powerupActive && powerupActive !== 'points' && type !== 'points') {
+        powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER);
+        showMessage(`${type.charAt(0).toUpperCase() + type.slice(1)} Powerup Extended!`);
+        return;
+    }
+
     powerupActive = type;
-    powerupTimer = 300 * (1 / GLOBAL_SPEED_MULTIPLIER); // Powerup duration scales with game speed
+    
+    let baseDuration = 300; 
+    if (type === 'magnet') {
+        const magnetUpgrade = playerUpgrades.find(u => u.type === 'magnetDuration');
+        if (magnetUpgrade) {
+            baseDuration += (magnetUpgrade.currentLevel * 120);
+        }
+    }
+    powerupTimer = baseDuration * (1 / GLOBAL_SPEED_MULTIPLIER);
     
     switch (type) {
       case 'shield':
@@ -799,10 +1272,6 @@ button:disabled {
         showMessage('Shield Active!');
         break;
       case 'slow':
-        // Note: Slow powerup effect itself is not scaled by GLOBAL_SPEED_MULTIPLIER
-        // because it's a *temporary* speed change to existing obstacles.
-        // It's already defined as a multiplication (0.5), so applying GLOBAL_SPEED_MULTIPLIER here again
-        // would make it too slow.
         obstacles.forEach(obs => obs.speed *= 0.5); 
         showMessage('Time Slowed!');
         break;
@@ -810,6 +1279,7 @@ button:disabled {
         score += 50;
         createScorePopup(player.x, player.y - player.radius - 20, 50); 
         showMessage('+50 Points!');
+        powerupActive = null; 
         break;
       case 'multiplier': 
         scoreMultiplier = 2;
@@ -836,9 +1306,8 @@ button:disabled {
           const angle = Math.atan2(dy, dx);
           const distance = Math.sqrt(dx*dx + dy*dy);
           if (distance > 20) { 
-            // Magnet pull speed also scales with GLOBAL_SPEED_MULTIPLIER
-            p.x += Math.cos(angle) * Math.min(5, distance / 10) * GLOBAL_SPEED_MULTIPLIER; 
-            p.y += Math.sin(angle) * Math.min(5, distance / 10) * GLOBAL_SPEED_MULTIPLIER; 
+            p.x += Math.cos(angle) * Math.min(7, distance / 10) * GLOBAL_SPEED_MULTIPLIER;
+            p.y += Math.sin(angle) * Math.min(7, distance / 10) * GLOBAL_SPEED_MULTIPLIER; 
           }
         });
       }
@@ -848,7 +1317,7 @@ button:disabled {
           player.shield = false;
           player.shieldAlpha = 0;
         } else if (powerupActive === 'slow') {
-          obstacles.forEach(obs => obs.speed *= 2);
+          obstacles.forEach(obs => obs.speed *= 2); 
         } else if (powerupActive === 'multiplier') {
           scoreMultiplier = 1;
         }
@@ -862,7 +1331,7 @@ button:disabled {
     messageBox.style.opacity = '1';
     setTimeout(() => {
       messageBox.style.opacity = '0';
-    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Message duration scales
+    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER));
   }
 
   function showLevelMessage(level) {
@@ -870,13 +1339,12 @@ button:disabled {
     levelMessage.style.opacity = '1';
     setTimeout(() => {
       levelMessage.style.opacity = '0';
-    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Message duration scales
+    }, 2000 * (1 / GLOBAL_SPEED_MULTIPLIER));
   }
 
   function updateGame() {
     if (!player) return;
 
-    // Update player invincibility timer
     if (player.invincibleTimer > 0) {
         player.invincibleTimer--;
         if (player.invincibleTimer === 0) {
@@ -898,17 +1366,36 @@ button:disabled {
     player.x = Math.max(player.radius, Math.min(width - player.radius, player.x));
 
     obstacles.forEach((obstacle, index) => {
+      if (obstacle.accelerateY) {
+          obstacle.speed += obstacle.accelerationY;
+      }
       obstacle.y += obstacle.speed;
-      obstacle.x += obstacle.velocityX; 
-      
-      // Keep horizontal obstacles within bounds
-      if (obstacle.x < 0 || obstacle.x + obstacle.width > width) {
-        obstacle.velocityX *= -1; 
+
+      if (obstacle.oscillate) {
+          obstacle.x += obstacle.velocityX * Math.sin(obstacle.oscillatePhase);
+          obstacle.oscillatePhase += 0.05 * GLOBAL_SPEED_MULTIPLIER;
+          if (obstacle.x < 0) {
+            obstacle.x = 0;
+            obstacle.oscillatePhase += Math.PI;
+          }
+          if (obstacle.x + obstacle.width > width) {
+            obstacle.x = width - obstacle.width;
+            obstacle.oscillatePhase += Math.PI;
+          }
+      } else {
+        obstacle.x += obstacle.velocityX; 
+        if (obstacle.x < 0 || obstacle.x + obstacle.width > width) {
+          obstacle.velocityX *= -1; 
+        }
       }
 
       if (obstacle.y > height) {
         obstacles.splice(index, 1);
         score += (10 * scoreMultiplier); 
+        if (soundOn) coinSound.play().catch(() => {});
+        
+        completeMission('score', score);
+        completeMission('coinsEarned', coins); // Pass current total coins
       }
     });
 
@@ -919,12 +1406,13 @@ button:disabled {
       }
     });
 
-    // Spawn rates are adjusted to be less frequent for a slower game
-    if (Math.random() < (0.009 + currentLevel * 0.0009) * GLOBAL_SPEED_MULTIPLIER) {
+    const obstacleSpawnRate = (0.009 + currentLevel * 0.0009 + score / 100000) * GLOBAL_SPEED_MULTIPLIER;
+    if (Math.random() < obstacleSpawnRate) {
       spawnObstacle();
     }
 
-    if (Math.random() < (0.0028) * GLOBAL_SPEED_MULTIPLIER) { 
+    const powerupSpawnRate = (0.0028 + currentLevel * 0.0001 + score / 200000) * GLOBAL_SPEED_MULTIPLIER;
+    if (Math.random() < powerupSpawnRate) { 
       spawnPowerup();
     }
 
@@ -932,7 +1420,6 @@ button:disabled {
     if (newLevel > currentLevel) {
       currentLevel = newLevel;
       showLevelMessage(currentLevel);
-      // Player max speed updates with level AND global multiplier
       player.maxSpeed = (5 + currentLevel * 0.07) * GLOBAL_SPEED_MULTIPLIER; 
     }
 
@@ -944,7 +1431,6 @@ button:disabled {
 
   function update() {
     if (!gameActive || paused || adPlaying) {
-        // Continue drawing if paused to show paused screen content
         if (paused) {
             ctx.clearRect(0, 0, width, height);
             drawBackground();
@@ -986,10 +1472,15 @@ button:disabled {
     player.invincible = false; 
     player.invincibleTimer = 0; 
 
+    completeMission('runsPlayed', 1);
+
     document.getElementById('start-screen').style.display = 'none';
     document.getElementById('game-over-screen').style.display = 'none';
     document.getElementById('continue-screen').style.display = 'none';
     document.getElementById('how-to-play-screen').style.display = 'none'; 
+    storeScreen.style.display = 'none'; // Ensure store screen is hidden
+    document.getElementById('daily-reward-screen').style.display = 'none'; 
+    document.getElementById('mission-screen').style.display = 'none'; 
     
     if (soundOn) {
       bgMusic.volume = 0.4;
@@ -1015,12 +1506,16 @@ button:disabled {
     saveGameData(); 
     updateHighScoreDisplays();
     updateCurrencyDisplay(); 
+    
+    completeMission('score', score);
+    completeMission('coinsEarned', coinsEarned); 
   }
 
   function renderSkinStore() {
     skinList.innerHTML = '';
     skins.forEach(skin => {
       const btn = document.createElement('button');
+      btn.className = 'skin-button'; 
       if (skin.colors.length === 3) {
         btn.style.background = `radial-gradient(circle at center, ${skin.colors.join(',')})`;
       } else {
@@ -1049,13 +1544,98 @@ button:disabled {
         btn.onclick = () => {
           selectedSkin = skin;
           saveGameData();
-          document.getElementById('skin-store').style.display = 'none';
+          storeScreen.style.display = 'none';
           document.getElementById('start-screen').style.display = 'flex';
           showMessage(`Selected ${skin.name} skin.`);
         };
       }
       skinList.appendChild(btn);
     });
+  }
+
+  function renderCoinPacks() {
+    coinPackList.innerHTML = '';
+    coinPacks.forEach(pack => {
+      const btn = document.createElement('button');
+      btn.className = 'coin-pack-button'; 
+      btn.innerHTML = `${pack.coins} Coins<br><span class="price-tag">${pack.price}</span>`;
+      btn.onclick = () => {
+        if (confirm(`Simulate purchase of ${pack.coins} coins for ${pack.price}?`)) {
+          coins += pack.coins;
+          saveGameData();
+          updateCurrencyDisplay();
+          showMessage(`Purchased ${pack.coins} coins!`);
+          renderSkinStore(); // Re-render skins to update buyable status
+          renderUpgrades(); // Re-render upgrades to update buyable status
+          renderPreGamePowerups(); // Re-render pre-game powerups to update buyable status
+        }
+      };
+      coinPackList.appendChild(btn);
+    });
+  }
+
+  function renderUpgrades() {
+      upgradeList.innerHTML = '';
+      playerUpgrades.forEach(upgrade => {
+          const btn = document.createElement('button');
+          btn.className = 'upgrade-button';
+          const nextPrice = upgrade.basePrice * Math.pow(upgrade.priceScale, upgrade.currentLevel);
+          const maxLevel = upgrade.currentLevel >= upgrade.levels;
+
+          btn.innerHTML = `${upgrade.name}<br>Level: ${upgrade.currentLevel}/${upgrade.levels}<br><span class="price-tag">${maxLevel ? 'MAX' : `${nextPrice} Coins`}</span>`;
+          btn.disabled = maxLevel || coins < nextPrice;
+
+          btn.onclick = () => {
+              if (!maxLevel && coins >= nextPrice) {
+                  if (confirm(`Upgrade ${upgrade.name} for ${nextPrice} Coins?`)) {
+                      coins -= nextPrice;
+                      upgrade.currentLevel++;
+                      saveGameData();
+                      updateCurrencyDisplay();
+                      renderUpgrades();
+                      showMessage(`Upgraded ${upgrade.name}!`);
+                  }
+              } else if (maxLevel) {
+                  showMessage('Upgrade is already max level!');
+              } else {
+                  showMessage('Not enough coins for upgrade!');
+              }
+          };
+          upgradeList.appendChild(btn);
+      });
+  }
+
+  function renderPreGamePowerups() {
+      preGamePowerupList.innerHTML = '';
+      preGamePowerups.forEach(powerup => {
+          const btn = document.createElement('button');
+          btn.className = 'pre-game-powerup-button';
+          let currentCount;
+          if (powerup.type === 'shield') currentCount = preGameShield;
+          else if (powerup.type === 'slow') currentCount = preGameSlow;
+          else if (powerup.type === 'multiplier') currentCount = preGameMultiplier;
+          
+          btn.innerHTML = `${powerup.icon} ${powerup.name}<br><span class="price-tag">${powerup.cost} Coins</span><br>Qty: ${currentCount}`;
+          btn.disabled = coins < powerup.cost;
+
+          btn.onclick = () => {
+              if (coins >= powerup.cost) {
+                  if (confirm(`Buy ${powerup.name} for ${powerup.cost} Coins?`)) {
+                      coins -= powerup.cost;
+                      if (powerup.type === 'shield') preGameShield++;
+                      else if (powerup.type === 'slow') preGameSlow++;
+                      else if (powerup.type === 'multiplier') preGameMultiplier++;
+                      saveGameData();
+                      updateCurrencyDisplay();
+                      renderPreGamePowerups();
+                      showMessage(`Purchased 1 ${powerup.name} boost!`);
+                  }
+              } else {
+                  showMessage('Not enough coins!');
+              }
+          };
+          preGamePowerupList.appendChild(btn);
+      });
   }
 
   function updateHighScoreDisplays() {
@@ -1068,6 +1648,233 @@ button:disabled {
   function updateCurrencyDisplay() { 
     currencyDisplay.textContent = `Coins: ${coins}`;
   }
+
+  // Daily Reward Functions
+  function checkDailyReward() {
+      const lastLoginDateStr = localStorage.getItem('lastLoginDate');
+      let dailyRewardDay = parseInt(localStorage.getItem('dailyRewardDay') || '0');
+      let dailyRewardClaimed = localStorage.getItem('dailyRewardClaimed') === 'true';
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let lastLoginDate = null;
+      if (lastLoginDateStr) {
+          lastLoginDate = new Date(lastLoginDateStr);
+          lastLoginDate.setHours(0, 0, 0, 0);
+      }
+
+      // If no last login, or it's a new day (diffDays >= 1)
+      if (!lastLoginDate || today.getTime() > lastLoginDate.getTime()) {
+          if (lastLoginDate && (today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24) > 1.5) { // More than 1.5 days means a break in streak
+              dailyRewardDay = 0; // Reset streak
+          }
+          localStorage.setItem('dailyRewardDay', dailyRewardDay); // Update in case streak reset
+          localStorage.setItem('dailyRewardClaimed', 'false'); // Unclaim for today
+          localStorage.setItem('lastLoginDate', today.toISOString()); // Set last login to today
+      }
+
+      if (localStorage.getItem('dailyRewardClaimed') === 'false') {
+          document.getElementById('daily-reward-btn').style.background = 'linear-gradient(45deg, #feca57, #ff9f43)';
+      } else {
+          document.getElementById('daily-reward-btn').style.background = '';
+      }
+      saveGameData(); // Ensure state is saved
+  }
+
+  function showDailyReward() {
+      document.getElementById('start-screen').style.display = 'none';
+      dailyRewardScreen.style.display = 'flex';
+
+      const dailyRewardDay = parseInt(localStorage.getItem('dailyRewardDay') || '0');
+      const dailyRewardClaimed = localStorage.getItem('dailyRewardClaimed') === 'true';
+      const statusText = document.getElementById('daily-reward-status');
+      const claimBtn = document.getElementById('claim-daily-reward-btn');
+      const rewardTrack = document.getElementById('daily-reward-track');
+      rewardTrack.innerHTML = '';
+
+      // Populate all 7 days for the track, highlighting current/claimed
+      dailyRewardData.forEach((reward, index) => {
+          const item = document.createElement('div');
+          item.className = 'daily-reward-item';
+          
+          if (index < dailyRewardDay) { // Days already passed in the streak
+              item.classList.add('claimed'); 
+          } else if (index === dailyRewardDay && dailyRewardClaimed) { // Current day, and claimed
+              item.classList.add('claimed');
+          }
+          
+          item.innerHTML = `Day ${reward.day}<br>${reward.coins} Coins`;
+          rewardTrack.appendChild(item);
+      });
+
+      if (dailyRewardDay < dailyRewardData.length && !dailyRewardClaimed) {
+          statusText.textContent = `Claim your Day ${dailyRewardDay + 1} reward!`;
+          claimBtn.disabled = false;
+      } else {
+          statusText.textContent = `You've claimed today's reward. Come back tomorrow!`;
+          claimBtn.disabled = true;
+          document.getElementById('daily-reward-btn').style.background = '';
+      }
+      
+      // Auto-scroll to the current day if possible
+      setTimeout(() => {
+          const currentDayElement = rewardTrack.children[dailyRewardDay];
+          if (currentDayElement) {
+              currentDayElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+      }, 100); 
+  }
+
+  document.getElementById('claim-daily-reward-btn').onclick = () => {
+      let dailyRewardDay = parseInt(localStorage.getItem('dailyRewardDay') || '0');
+      const dailyRewardClaimed = localStorage.getItem('dailyRewardClaimed') === 'true';
+
+      if (!dailyRewardClaimed) { 
+          const rewardIndex = dailyRewardDay % dailyRewardData.length; 
+          const reward = dailyRewardData[rewardIndex];
+          coins += reward.coins;
+          updateCurrencyDisplay();
+          showMessage(`Claimed ${reward.coins} coins!`);
+          
+          localStorage.setItem('dailyRewardDay', dailyRewardDay + 1);
+          localStorage.setItem('dailyRewardClaimed', 'true');
+          localStorage.setItem('lastLoginDate', new Date().toISOString()); 
+          saveGameData();
+          showDailyReward(); 
+          if (soundOn) coinSound.play().catch(() => {});
+      } else {
+          showMessage('Already claimed today\'s reward!');
+      }
+  };
+  document.getElementById('close-daily-reward-btn').onclick = () => {
+      dailyRewardScreen.style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
+      checkDailyReward();
+  };
+
+  // Mission Functions
+  function generateNewMissions() {
+      missions = [];
+      const shuffledTemplates = [...missionTemplates].sort(() => 0.5 - Math.random());
+      
+      for (let i = 0; i < 3; i++) {
+          const template = shuffledTemplates[i % shuffledTemplates.length];
+          const levelIndex = Math.floor(Math.random() * template.target.length);
+          const target = template.target[levelIndex];
+          const reward = template.reward[levelIndex];
+          missions.push({
+              id: template.id,
+              description: template.text.replace('{target}', target),
+              target: target,
+              currentProgress: 0,
+              reward: reward,
+              completed: false
+          });
+      }
+      localStorage.setItem('lastMissionReset', new Date().toISOString());
+      saveGameData();
+  }
+
+  function resetMissionsDaily() {
+      const lastResetDateStr = localStorage.getItem('lastMissionReset');
+      if (!lastResetDateStr) {
+          generateNewMissions();
+          return;
+      }
+      const lastResetDate = new Date(lastResetDateStr);
+      lastResetDate.setHours(0, 0, 0, 0);
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (today.getTime() > lastResetDate.getTime()) {
+          generateNewMissions();
+      }
+  }
+
+  function updateMissionsDisplay() {
+      const missionListEl = document.getElementById('mission-list');
+      missionListEl.innerHTML = '';
+      missions.forEach((mission, index) => {
+          const li = document.createElement('li');
+          li.className = mission.completed ? 'completed' : '';
+          
+          let progressText = '';
+          if (mission.id === 'score' || mission.id === 'coinsEarned') {
+              progressText = ` (${mission.currentProgress}/${mission.target})`;
+          } else if (mission.id === 'powerupsCollected' || mission.id === 'runsPlayed') {
+              progressText = ` (${mission.currentProgress}/${mission.target})`;
+          }
+
+          li.innerHTML = `
+              <span>${mission.description}${progressText}</span>
+              ${mission.completed ? `<button disabled>Claimed</button>` : `<button data-index="${index}" ${mission.currentProgress >= mission.target ? '' : 'disabled'}>Claim ${mission.reward} Coins</button>`}
+          `;
+          missionListEl.appendChild(li);
+      });
+
+      missionListEl.querySelectorAll('button[data-index]').forEach(button => {
+          button.onclick = (e) => {
+              const index = parseInt(e.target.dataset.index);
+              const mission = missions[index];
+              if (mission && !mission.completed && mission.currentProgress >= mission.target) {
+                  coins += mission.reward;
+                  mission.completed = true;
+                  saveGameData();
+                  updateCurrencyDisplay();
+                  updateMissionsDisplay();
+                  showMessage(`Mission Complete! +${mission.reward} Coins!`);
+                  if (soundOn) missionCompleteSound.play().catch(() => {});
+              }
+          };
+      });
+  }
+
+  function completeMission(id, value = 1) {
+      missions.forEach(mission => {
+          if (!mission.completed) {
+              if (mission.id === id) {
+                  if (id === 'score' || id === 'coinsEarned') {
+                      if (value > mission.currentProgress) { 
+                          mission.currentProgress = value;
+                      }
+                  } else if (id === 'runsPlayed' || id === 'powerupsCollected') {
+                      mission.currentProgress += value;
+                  }
+              }
+          }
+      });
+      saveGameData();
+  }
+
+  // Tutorial Function
+  function showTutorial() {
+      const hasSeenTutorial = localStorage.getItem('hasSeenTutorial') === 'true';
+      if (!hasSeenTutorial) {
+          tutorialOverlay.style.display = 'flex';
+          localStorage.setItem('hasSeenTutorial', 'true');
+          saveGameData();
+      }
+  }
+
+  // Store tab switching logic
+  function showStoreTab(tabId) {
+      document.querySelectorAll('.store-section').forEach(section => {
+          section.classList.remove('active');
+      });
+      document.querySelectorAll('#store-tabs button').forEach(button => {
+          button.classList.remove('active');
+      });
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`[data-tab-target="${tabId}"]`).classList.add('active');
+  }
+
+  document.getElementById('tab-skins').onclick = () => showStoreTab('skins-section');
+  document.getElementById('tab-coin-packs').onclick = () => showStoreTab('coin-packs-section');
+  document.getElementById('tab-upgrades').onclick = () => showStoreTab('upgrades-section');
+  document.getElementById('tab-pre-game-boosts').onclick = () => showStoreTab('pre-game-boosts-section');
+
 
   window.addEventListener('keydown', e => {
     if (!player || !gameActive || paused || adPlaying) return;
@@ -1093,7 +1900,7 @@ button:disabled {
     } else {
       player.movingRight = true;
     }
-  });
+  }, { passive: false }); 
 
   canvas.addEventListener('touchend', e => {
     if (!player) return;
@@ -1104,7 +1911,8 @@ button:disabled {
 
   canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-  });
+  }, { passive: false }); 
+
 
   window.addEventListener('resize', () => {
     resize();
@@ -1119,16 +1927,20 @@ button:disabled {
 
   document.getElementById('store-btn').onclick = () => {
     document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('skin-store').style.display = 'flex';
+    storeScreen.style.display = 'flex';
     renderSkinStore();
+    renderCoinPacks();
+    renderUpgrades();
+    renderPreGamePowerups();
+    // Set default tab to skins when opening store
+    showStoreTab('skins-section');
   };
 
-  document.getElementById('close-skin-store-btn').onclick = () => {
-    document.getElementById('skin-store').style.display = 'none';
+  document.getElementById('close-store-btn').onclick = () => {
+    storeScreen.style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
   };
 
-  // New How to Play screen buttons
   document.getElementById('how-to-play-btn').onclick = () => {
     document.getElementById('start-screen').style.display = 'none';
     howToPlayScreen.style.display = 'flex';
@@ -1137,6 +1949,25 @@ button:disabled {
   document.getElementById('close-how-to-play-btn').onclick = () => {
     howToPlayScreen.style.display = 'none';
     document.getElementById('start-screen').style.display = 'flex';
+  };
+
+  document.getElementById('daily-reward-btn').onclick = () => {
+      showDailyReward();
+  };
+
+  document.getElementById('missions-btn').onclick = () => {
+      document.getElementById('start-screen').style.display = 'none';
+      missionScreen.style.display = 'flex';
+      updateMissionsDisplay();
+  };
+  document.getElementById('close-missions-btn').onclick = () => {
+      missionScreen.style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
+  };
+
+  document.getElementById('tutorial-close-btn').onclick = () => {
+      tutorialOverlay.style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
   };
 
   document.getElementById('no-thanks-btn').onclick = () => {
@@ -1150,7 +1981,6 @@ button:disabled {
     document.getElementById('watch-ad-btn').disabled = true;
     document.getElementById('watch-ad-btn').textContent = 'Loading Ad...';
 
-    // Simulate ad watching for 5 seconds
     let secondsLeft = 5;
     const interval = setInterval(() => {
       document.getElementById('watch-ad-btn').textContent = `Ad ends in ${secondsLeft--}s`;
@@ -1158,10 +1988,9 @@ button:disabled {
         clearInterval(interval);
         document.getElementById('continue-screen').style.display = 'none';
         
-        // Resume game state after "ad"
         createPlayer(); 
         player.invincible = true; 
-        player.invincibleTimer = 120 * (1 / GLOBAL_SPEED_MULTIPLIER); // Invincibility duration scales
+        player.invincibleTimer = 120 * (1 / GLOBAL_SPEED_MULTIPLIER);
         gameActive = true;
         paused = false;
         adPlaying = false;
@@ -1170,7 +1999,7 @@ button:disabled {
         if (soundOn) bgMusic.play().catch(() => {});
         requestAnimationFrame(update);
       }
-    }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER)); // Ad duration scales
+    }, 1000 * (1 / GLOBAL_SPEED_MULTIPLIER));
   };
 
   toggleSoundBtn.onclick = () => {
@@ -1195,14 +2024,19 @@ button:disabled {
     }
   };
 
+  // Initial load and setup
   loadGameData();
   resize();
-  createPlayer();
+  createPlayer(); 
   updateHighScoreDisplays();
   updateCurrencyDisplay();
+  checkDailyReward();
+  resetMissionsDaily();
+  showTutorial(); 
   requestAnimationFrame(update);
 
 })();
 </script>
 </body>
 </html>
+```
